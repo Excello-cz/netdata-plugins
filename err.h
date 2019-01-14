@@ -4,6 +4,7 @@ enum nd_err {
 
 	ND_ALLOC,
 	ND_INOTIFY,
+	ND_FILE,
 };
 
 char *

@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include <poll.h>
 #include <stdio.h>
@@ -54,9 +55,22 @@ set_wd_for_log_file(const int fd, const char * file_name) {
 }
 
 static
-void
-reopen_log_file() {
-	/* TODO: implement it */
+enum nd_err
+reopen_log_file(const char * file_name) {
+	inotify_rm_watch(ino_fd, wd[LOG_FILE]);
+	close(log_fd);
+
+	wd[LOG_FILE] = inotify_add_watch(ino_fd, file_name, IN_MODIFY);
+
+	if (wd[LOG_FILE] == -1)
+		return ND_INOTIFY;
+
+	fprintf(stderr, "D: reopening file\n");
+	log_fd = open(file_name, O_RDONLY);
+	if (log_fd == -1)
+		return ND_FILE;
+
+	return ND_SUCCUESS;
 }
 
 static
@@ -171,7 +185,7 @@ main(int argc, char * argv[]) {
 			event_result = handle_inot_events();
 			process_log_data();
 			if (event_result == ND_REOPEN_LOG_FILE) {
-				reopen_log_file();
+				reopen_log_file(file_name);
 			}
 		} else if (nfd == 0) {
 			fprintf(stderr, "D: timeout\n");
