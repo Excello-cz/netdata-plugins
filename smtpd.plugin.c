@@ -1,8 +1,11 @@
+#include <errno.h>
 #include <libgen.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <unistd.h>
 
 #include "err.h"
 
@@ -71,12 +74,49 @@ init_inotifier(const char * file_name) {
 	return ND_SUCCUESS;
 }
 
+static
+void
+handle_inot_event(const struct inotify_event * event) {
+	if (event->wd == wd[LOG_DIR]) {
+		fprintf(stderr, "D: logdir event\n");
+	} else if (event->wd == wd[LOG_FILE]) {
+		fprintf(stderr, "D: logfile evnet\n");
+	}
+}
+
+static
+void
+handle_inot_events() {
+	const struct inotify_event * event;
+	char buf[BUFSIZ];
+	ssize_t len;
+	char * ptr;
+
+	for (;;) {
+		len = read(ino_fd, buf, sizeof buf);
+		if (len == -1 && errno != EAGAIN) {
+			perror("E: cannot read inofd");
+			exit(1);
+		}
+
+		if (len <= 0)
+			break;
+
+		for (ptr = buf; ptr < buf + len; ptr += sizeof * event + event->len) {
+			event = (const struct inotify_event *)ptr;
+			handle_inot_event(event);
+		}
+	}
+}
+
 int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
 	const char * argv0;
+	struct pollfd pfd;
 	enum nd_err ret;
 	int update = 1;
+	int nfd;
 
 	argv0 = *argv; argv++; argc--;
 
@@ -93,6 +133,24 @@ main(int argc, char * argv[]) {
 	}
 
 	ret = init_inotifier(file_name);
+
+	pfd.fd = ino_fd;
+	pfd.events = POLLIN;
+
+	for (;;) {
+		nfd = poll(&pfd, 1, update * 1000);
+		if (nfd > 0) {
+			handle_inot_events();
+		} else if (nfd == 0) {
+			fprintf(stderr, "D: timeout\n");
+			continue;
+		} else {
+			fprintf(stderr, "E: poll error\n");
+			break;
+		}
+
+		fprintf(stderr, "D: loop\n");
+	}
 
 	return ret;
 }
