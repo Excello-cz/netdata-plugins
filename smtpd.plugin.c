@@ -9,6 +9,8 @@
 #define LOG_DIR  0
 #define LOG_FILE 1
 
+#define DEFALT_PATH "/var/log/qmail/qmail-smtpd/current"
+
 static int log_fd; /* smtp log file descriptor */
 static int ino_fd; /* inotify file descriptor */
 static int wd[2];  /* Watch descriptors for inotify */
@@ -34,7 +36,7 @@ set_wd_for_log_directory(const int fd, const char * file_name) {
 
 int
 main(int argc, char * argv[]) {
-	const char * file_name;
+	const char * file_name = DEFALT_PATH;
 	const char * argv0;
 	enum nd_err ret;
 	int update = 1;
