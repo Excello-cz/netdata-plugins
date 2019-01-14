@@ -46,6 +46,8 @@ main(int argc, char * argv[]) {
 	if (argc >= 1) {
 		update = atoi(*argv);
 		argv++; argc--;
+	} else {
+		fprintf(stderr, "Usage: %s <update> [path]\n", argv0);
 	}
 
 	if (argc) {
