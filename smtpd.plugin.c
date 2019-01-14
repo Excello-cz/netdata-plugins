@@ -34,6 +34,17 @@ set_wd_for_log_directory(const int fd, const char * file_name) {
 	return ND_SUCCUESS;
 }
 
+static
+enum nd_err
+set_wd_for_log_file(const int fd, const char * file_name) {
+	wd[LOG_FILE] = inotify_add_watch(fd, file_name, IN_MODIFY);
+
+	if (wd[LOG_FILE] == -1)
+		return ND_INOTIFY;
+
+	return ND_SUCCUESS;
+}
+
 int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
@@ -64,6 +75,11 @@ main(int argc, char * argv[]) {
 	ret = set_wd_for_log_directory(ino_fd, file_name);
 	if (ret != ND_SUCCUESS) {
 		fprintf(stderr, "Cannot watch log dir: %s\n", nd_err_to_str(ret));
+		exit(1);
+	}
+	ret = set_wd_for_log_file(ino_fd, file_name);
+	if (ret != ND_SUCCUESS) {
+		fprintf(stderr, "Cannot watch log file: %s\n", nd_err_to_str(ret));
 		exit(1);
 	}
 
