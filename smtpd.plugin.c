@@ -45,6 +45,32 @@ set_wd_for_log_file(const int fd, const char * file_name) {
 	return ND_SUCCUESS;
 }
 
+static
+enum nd_err
+init_inotifier(const char * file_name) {
+	enum nd_err ret;
+
+	ino_fd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
+	if (ino_fd == -1) {
+		fprintf(stderr, "E: Cannot init inotify\n");
+		return ND_INOTIFY;
+	}
+
+	ret = set_wd_for_log_directory(ino_fd, file_name);
+	if (ret != ND_SUCCUESS) {
+		fprintf(stderr, "E: Cannot watch log dir: %s\n", nd_err_to_str(ret));
+		return ret;
+	}
+
+	ret = set_wd_for_log_file(ino_fd, file_name);
+	if (ret != ND_SUCCUESS) {
+		fprintf(stderr, "E: Cannot watch log file: %s\n", nd_err_to_str(ret));
+		return ret;
+	}
+
+	return ND_SUCCUESS;
+}
+
 int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
@@ -66,22 +92,7 @@ main(int argc, char * argv[]) {
 		argv++; argc--;
 	}
 
-	ino_fd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
-	if (ino_fd == -1) {
-		fprintf(stderr, "Cannot init inotify\n");
-		exit(1);
-	}
+	ret = init_inotifier(file_name);
 
-	ret = set_wd_for_log_directory(ino_fd, file_name);
-	if (ret != ND_SUCCUESS) {
-		fprintf(stderr, "Cannot watch log dir: %s\n", nd_err_to_str(ret));
-		exit(1);
-	}
-	ret = set_wd_for_log_file(ino_fd, file_name);
-	if (ret != ND_SUCCUESS) {
-		fprintf(stderr, "Cannot watch log file: %s\n", nd_err_to_str(ret));
-		exit(1);
-	}
-
-	return 0;
+	return ret;
 }
