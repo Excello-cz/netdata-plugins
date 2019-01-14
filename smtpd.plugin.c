@@ -146,8 +146,14 @@ handle_inot_events() {
 
 static
 void
-process_log_data() {
-	/* TODO: implement this */
+process_log_data(const int fd) {
+	char buf[BUFSIZ];
+	ssize_t ret;
+
+	while ((ret = read(fd, buf, sizeof buf)) > 0) {
+		fprintf(stderr, "D: data len %ld\n", ret);
+		/* TODO: implement the body */
+	}
 }
 
 int
@@ -175,6 +181,12 @@ main(int argc, char * argv[]) {
 	}
 
 	ret = init_inotifier(file_name);
+	log_fd = open(file_name, O_RDONLY);
+	if (log_fd == -1) {
+		perror("E: Cannot open file");
+		exit(1);
+	}
+	lseek(log_fd, 0, SEEK_END);
 
 	pfd.fd = ino_fd;
 	pfd.events = POLLIN;
@@ -183,7 +195,7 @@ main(int argc, char * argv[]) {
 		nfd = poll(&pfd, 1, update * 1000);
 		if (nfd > 0) {
 			event_result = handle_inot_events();
-			process_log_data();
+			process_log_data(log_fd);
 			if (event_result == ND_REOPEN_LOG_FILE) {
 				reopen_log_file(file_name);
 			}
