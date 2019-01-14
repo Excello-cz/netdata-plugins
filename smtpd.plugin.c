@@ -54,6 +54,12 @@ set_wd_for_log_file(const int fd, const char * file_name) {
 }
 
 static
+void
+reopen_log_file() {
+	/* TODO: implement it */
+}
+
+static
 enum nd_err
 init_inotifier(const char * file_name) {
 	enum nd_err ret;
@@ -124,6 +130,12 @@ handle_inot_events() {
 	return ret;
 }
 
+static
+void
+process_log_data() {
+	/* TODO: implement this */
+}
+
 int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
@@ -157,6 +169,10 @@ main(int argc, char * argv[]) {
 		nfd = poll(&pfd, 1, update * 1000);
 		if (nfd > 0) {
 			event_result = handle_inot_events();
+			process_log_data();
+			if (event_result == ND_REOPEN_LOG_FILE) {
+				reopen_log_file();
+			}
 		} else if (nfd == 0) {
 			fprintf(stderr, "D: timeout\n");
 			continue;
