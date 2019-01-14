@@ -18,6 +18,11 @@ static int log_fd; /* smtp log file descriptor */
 static int ino_fd; /* inotify file descriptor */
 static int wd[2];  /* Watch descriptors for inotify */
 
+enum event_result {
+	ND_NOTHING,
+	ND_REOPEN_LOG_FILE,
+};
+
 static
 enum nd_err
 set_wd_for_log_directory(const int fd, const char * file_name) {
@@ -75,18 +80,25 @@ init_inotifier(const char * file_name) {
 }
 
 static
-void
+enum event_result
 handle_inot_event(const struct inotify_event * event) {
 	if (event->wd == wd[LOG_DIR]) {
 		fprintf(stderr, "D: logdir event\n");
+		if (event->len && !strcmp(event->name, "current")) {
+			fprintf(stderr, "D: there is new 'current'\n");
+			return ND_REOPEN_LOG_FILE;
+		}
 	} else if (event->wd == wd[LOG_FILE]) {
 		fprintf(stderr, "D: logfile evnet\n");
 	}
+
+	return ND_NOTHING;
 }
 
 static
-void
+enum event_result
 handle_inot_events() {
+	enum event_result ret = ND_NOTHING;
 	const struct inotify_event * event;
 	char buf[BUFSIZ];
 	ssize_t len;
@@ -104,14 +116,18 @@ handle_inot_events() {
 
 		for (ptr = buf; ptr < buf + len; ptr += sizeof * event + event->len) {
 			event = (const struct inotify_event *)ptr;
-			handle_inot_event(event);
+			if (handle_inot_event(event) == ND_REOPEN_LOG_FILE)
+				ret = ND_REOPEN_LOG_FILE;
 		}
 	}
+
+	return ret;
 }
 
 int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
+	enum event_result event_result;
 	const char * argv0;
 	struct pollfd pfd;
 	enum nd_err ret;
@@ -140,7 +156,7 @@ main(int argc, char * argv[]) {
 	for (;;) {
 		nfd = poll(&pfd, 1, update * 1000);
 		if (nfd > 0) {
-			handle_inot_events();
+			event_result = handle_inot_events();
 		} else if (nfd == 0) {
 			fprintf(stderr, "D: timeout\n");
 			continue;
