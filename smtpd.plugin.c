@@ -192,6 +192,8 @@ main(int argc, char * argv[]) {
 	pfd.events = POLLIN;
 
 	for (;;) {
+		/* TODO: Implement timer. You can look to the timerfd_create(2) man page
+		 * or you can implement your own solution. */
 		nfd = poll(&pfd, 1, update * 1000);
 		if (nfd > 0) {
 			event_result = handle_inot_events();
