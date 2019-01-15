@@ -29,7 +29,7 @@ enum event_result {
 };
 
 struct statistics {
-	int lines;
+	int tcp_ok;
 };
 
 static
@@ -171,8 +171,10 @@ process_log_data(const int fd, struct statistics * data) {
 
 	while ((ret = read(fd, buf, sizeof buf)) > 0) {
 		fprintf(stderr, "D: data len %ld\n", ret);
-		/* TODO: implement the body */
-		data->lines++;
+
+		if (strstr(buf, "tcpserver: ok")) {
+			data->tcp_ok++;
+		}
 	}
 }
 
@@ -185,7 +187,9 @@ free_data(struct statistics * data) {
 static
 void
 print_data(const struct statistics * data) {
-	printf("lines: %d\n", data->lines);
+	puts("BEGIN qmail.smtpd");
+	printf("SET tcp_ok %d\n", data->tcp_ok);
+	puts("END");
 	fflush(stdout);
 }
 
