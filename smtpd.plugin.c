@@ -35,6 +35,11 @@ struct statistics {
 	int tcp_deny;
 	int tcp_status_sum;
 	int tcp_status_count;
+
+	int tcp_end_status_0;
+	int tcp_end_status_256;
+	int tcp_end_status_25600;
+	int tcp_end_status_others;
 };
 
 static
@@ -196,6 +201,26 @@ process_log_data(const int fd, struct statistics * data) {
 			data->tcp_status_count++;
 			//fprintf(stderr, "v: %d s: %d\n", val, data->tcp_status_sum);
 		}
+		if ((ptr = strstr(buf, "tcpserver: end "))) {
+			ptr = strstr(ptr, "status ");
+			if (ptr) {
+				val = strtoul(ptr + sizeof "status " - 1, 0, 0);
+				switch (val) {
+				case 0:
+					data->tcp_end_status_0++;
+					break;
+				case 256:
+					data->tcp_end_status_256++;
+					break;
+				case 25600:
+					data->tcp_end_status_25600++;
+					break;
+				default:
+					data->tcp_end_status_others++;
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -215,6 +240,12 @@ print_header() {
 
 	puts("CHART qmail.smtpd_status 'smtpd qmail status' 'Qmail SMTPD Status' 'smtpd average status'");
 	puts("DIMENSION tcp_status_average 'status average' absolute 1 100");
+
+	puts("CHART qmail.smtpd_end_status 'smtpd end status' 'Qmail SMTPD End Status' '# smtpd end statuses'");
+	puts("DIMENSION tcp_end_status_0 'end 0' absolute 1 1");
+	puts("DIMENSION tcp_end_status_256 'end 256' absolute 1 1");
+	puts("DIMENSION tcp_end_status_25600 'end 25600' absolute 1 1");
+	puts("DIMENSION tcp_end_status_others 'end other' absolute 1 1");
 	fflush(stdout);
 }
 
@@ -229,6 +260,13 @@ print_data(const struct statistics * data) {
 	puts("BEGIN qmail.smtpd_status");
 	printf("SET tcp_status_average %d\n",
 		data->tcp_status_count ? data->tcp_status_sum * 100 / data->tcp_status_count : 0);
+	puts("END");
+
+	puts("BEGIN qmail.smtpd_end_status");
+	printf("SET tcp_end_status_0 %d\n", data->tcp_end_status_0);
+	printf("SET tcp_end_status_256 %d\n", data->tcp_end_status_256);
+	printf("SET tcp_end_status_25600 %d\n", data->tcp_end_status_25600);
+	printf("SET tcp_end_status_others %d\n", data->tcp_end_status_others);
 	puts("END");
 
 	fflush(stdout);
