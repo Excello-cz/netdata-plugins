@@ -292,6 +292,7 @@ main(int argc, char * argv[]) {
 	}
 
 	free_data(&data);
+	fprintf(stderr, "D: Starting smptd.plugin");
 	print_header();
 
 	for (run = 1; run ;) {
