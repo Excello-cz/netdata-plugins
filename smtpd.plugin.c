@@ -314,7 +314,7 @@ main(int argc, char * argv[]) {
 			fprintf(stderr, "D: timeout\n");
 			continue;
 		} else {
-			fprintf(stderr, "E: poll error\n");
+			perror("E: poll error");
 			break;
 		}
 
