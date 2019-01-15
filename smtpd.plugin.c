@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +23,7 @@
 static int log_fd; /* smtp log file descriptor */
 static int ino_fd; /* inotify file descriptor */
 static int wd[2];  /* Watch descriptors for inotify */
+static int run;
 
 enum event_result {
 	ND_NOTHING,
@@ -34,6 +36,11 @@ struct statistics {
 	int tcp_status_sum;
 	int tcp_status_count;
 };
+
+static
+void sigexit(int i) {
+	run = 0;
+}
 
 static
 enum nd_err
@@ -246,6 +253,9 @@ main(int argc, char * argv[]) {
 		argv++; argc--;
 	}
 
+	signal(SIGTERM, sigexit);
+	signal(SIGQUIT, sigexit);
+
 	ret = init_inotifier(file_name);
 	log_fd = open(file_name, O_RDONLY);
 	if (log_fd == -1) {
@@ -277,7 +287,7 @@ main(int argc, char * argv[]) {
 	free_data(&data);
 	print_header();
 
-	for (;;) {
+	for (run = 1; run ;) {
 		nfd = poll(pfd, 2, -1);
 		if (nfd > 0) {
 			if (pfd[POLL_INOTIFY].revents & POLLIN) {
@@ -302,6 +312,8 @@ main(int argc, char * argv[]) {
 
 		fprintf(stderr, "D: loop\n");
 	}
+
+	fputs("D: Exiting\n", stderr);
 
 	return ret;
 }
