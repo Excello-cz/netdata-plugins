@@ -30,6 +30,7 @@ enum event_result {
 
 struct statistics {
 	int tcp_ok;
+	int tcp_deny;
 };
 
 static
@@ -175,6 +176,9 @@ process_log_data(const int fd, struct statistics * data) {
 		if (strstr(buf, "tcpserver: ok")) {
 			data->tcp_ok++;
 		}
+		if (strstr(buf, "tcpserver: deny")) {
+			data->tcp_deny++;
+		}
 	}
 }
 
@@ -189,6 +193,7 @@ void
 print_data(const struct statistics * data) {
 	puts("BEGIN qmail.smtpd");
 	printf("SET tcp_ok %d\n", data->tcp_ok);
+	printf("SET tcp_deny %d\n", -data->tcp_deny);
 	puts("END");
 	fflush(stdout);
 }
