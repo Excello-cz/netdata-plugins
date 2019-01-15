@@ -238,10 +238,10 @@ print_header() {
 	puts("DIMENSION tcp_ok 'TCP OK' absolute 1 1");
 	puts("DIMENSION tcp_deny 'TCP Deny' absolute 1 1");
 
-	puts("CHART qmail.smtpd_status 'smtpd qmail status' 'Qmail SMTPD Status' 'smtpd average status'");
+	puts("CHART qmail.smtpd_status 'smtpd qmail status' 'Qmail SMTPD Status' 'smtpd average status' smtpd");
 	puts("DIMENSION tcp_status_average 'status average' absolute 1 100");
 
-	puts("CHART qmail.smtpd_end_status 'smtpd end status' 'Qmail SMTPD End Status' '# smtpd end statuses'");
+	puts("CHART qmail.smtpd_end_status 'smtpd end status' 'Qmail SMTPD End Status' '# smtpd end statuses' smtpd");
 	puts("DIMENSION tcp_end_status_0 'end 0' absolute 1 1");
 	puts("DIMENSION tcp_end_status_256 'end 256' absolute 1 1");
 	puts("DIMENSION tcp_end_status_25600 'end 25600' absolute 1 1");
