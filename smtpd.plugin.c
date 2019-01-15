@@ -13,6 +13,9 @@
 #define LOG_DIR  0
 #define LOG_FILE 1
 
+#define POLL_INOTIFY 0
+#define POLL_TIMER   1
+
 #define DEFALT_PATH "/var/log/qmail/qmail-smtpd/current"
 
 static int log_fd; /* smtp log file descriptor */
@@ -160,8 +163,8 @@ int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
 	enum event_result event_result;
+	struct pollfd pfd[2];
 	const char * argv0;
-	struct pollfd pfd;
 	enum nd_err ret;
 	int update = 1;
 	int nfd;
@@ -188,13 +191,13 @@ main(int argc, char * argv[]) {
 	}
 	lseek(log_fd, 0, SEEK_END);
 
-	pfd.fd = ino_fd;
-	pfd.events = POLLIN;
+	pfd[POLL_INOTIFY].fd = ino_fd;
+	pfd[POLL_INOTIFY].events = POLLIN;
 
 	for (;;) {
 		/* TODO: Implement timer. You can look to the timerfd_create(2) man page
 		 * or you can implement your own solution. */
-		nfd = poll(&pfd, 1, update * 1000);
+		nfd = poll(pfd, 1, update * 1000);
 		if (nfd > 0) {
 			event_result = handle_inot_events();
 			process_log_data(log_fd);
