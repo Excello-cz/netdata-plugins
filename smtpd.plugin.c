@@ -200,6 +200,16 @@ free_data(struct statistics * data) {
 
 static
 void
+print_header() {
+	puts("CHART qmail.smtpd '' 'Qmail SMTPD' '# smtpd connections'");
+	puts("DIMENSION tcp_ok 'TCP OK' absolute 1 1");
+	puts("DIMENSION tcp_deny 'TCP Deny' absolute 1 1");
+	puts("DIMENSION tcp_status_average 'status average' absolute 1 100");
+	fflush(stdout);
+}
+
+static
+void
 print_data(const struct statistics * data) {
 	puts("BEGIN qmail.smtpd");
 	printf("SET tcp_ok %d\n", data->tcp_ok);
@@ -265,6 +275,7 @@ main(int argc, char * argv[]) {
 	}
 
 	free_data(&data);
+	print_header();
 
 	for (;;) {
 		nfd = poll(pfd, 2, -1);
