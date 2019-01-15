@@ -31,6 +31,8 @@ enum event_result {
 struct statistics {
 	int tcp_ok;
 	int tcp_deny;
+	int tcp_status_sum;
+	int tcp_status_count;
 };
 
 static
@@ -169,6 +171,8 @@ void
 process_log_data(const int fd, struct statistics * data) {
 	char buf[BUFSIZ];
 	ssize_t ret;
+	char * ptr;
+	int val;
 
 	while ((ret = read(fd, buf, sizeof buf)) > 0) {
 		fprintf(stderr, "D: data len %ld\n", ret);
@@ -178,6 +182,12 @@ process_log_data(const int fd, struct statistics * data) {
 		}
 		if (strstr(buf, "tcpserver: deny")) {
 			data->tcp_deny++;
+		}
+		if ((ptr = strstr(buf, "tcpserver: status: "))) {
+			val = strtoul(ptr + sizeof "tcpserver: status: " - 1, 0, 0);
+			data->tcp_status_sum += val;
+			data->tcp_status_count++;
+			fprintf(stderr, "v: %d s: %d\n", val, data->tcp_status_sum);
 		}
 	}
 }
@@ -194,6 +204,8 @@ print_data(const struct statistics * data) {
 	puts("BEGIN qmail.smtpd");
 	printf("SET tcp_ok %d\n", data->tcp_ok);
 	printf("SET tcp_deny %d\n", -data->tcp_deny);
+	printf("SET tcp_status_average %d\n",
+		data->tcp_status_count ? data->tcp_status_sum * 100 / data->tcp_status_count : 0);
 	puts("END");
 	fflush(stdout);
 }
