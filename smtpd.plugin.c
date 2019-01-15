@@ -208,9 +208,12 @@ free_data(struct statistics * data) {
 static
 void
 print_header() {
-	puts("CHART qmail.smtpd '' 'Qmail SMTPD' '# smtpd connections'");
+	/*            type.id       name           title                units       family context chartype     */
+	puts("CHART qmail.smtpd 'smtpd qmail' 'Qmail SMTPD' '# smtpd connections' smtpd con area");
 	puts("DIMENSION tcp_ok 'TCP OK' absolute 1 1");
 	puts("DIMENSION tcp_deny 'TCP Deny' absolute 1 1");
+
+	puts("CHART qmail.smtpd_status 'smtpd qmail status' 'Qmail SMTPD Status' 'smtpd average status'");
 	puts("DIMENSION tcp_status_average 'status average' absolute 1 100");
 	fflush(stdout);
 }
@@ -221,9 +224,13 @@ print_data(const struct statistics * data) {
 	puts("BEGIN qmail.smtpd");
 	printf("SET tcp_ok %d\n", data->tcp_ok);
 	printf("SET tcp_deny %d\n", -data->tcp_deny);
+	puts("END");
+
+	puts("BEGIN qmail.smtpd_status");
 	printf("SET tcp_status_average %d\n",
 		data->tcp_status_count ? data->tcp_status_sum * 100 / data->tcp_status_count : 0);
 	puts("END");
+
 	fflush(stdout);
 }
 
