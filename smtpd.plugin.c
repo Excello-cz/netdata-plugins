@@ -28,6 +28,10 @@ enum event_result {
 	ND_REOPEN_LOG_FILE,
 };
 
+struct statistics {
+	int lines;
+};
+
 static
 enum nd_err
 set_wd_for_log_directory(const int fd, const char * file_name) {
@@ -161,14 +165,28 @@ handle_timer(const int fd) {
 
 static
 void
-process_log_data(const int fd) {
+process_log_data(const int fd, struct statistics * data) {
 	char buf[BUFSIZ];
 	ssize_t ret;
 
 	while ((ret = read(fd, buf, sizeof buf)) > 0) {
 		fprintf(stderr, "D: data len %ld\n", ret);
 		/* TODO: implement the body */
+		data->lines++;
 	}
+}
+
+static
+void
+free_data(struct statistics * data) {
+	memset(data, 0, sizeof * data);
+}
+
+static
+void
+print_data(const struct statistics * data) {
+	printf("lines: %d\n", data->lines);
+	fflush(stdout);
 }
 
 int
@@ -176,6 +194,7 @@ main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
 	enum event_result event_result;
 	struct itimerspec timer_value;
+	struct statistics data;
 	struct pollfd pfd[2];
 	const char * argv0;
 	enum nd_err ret;
@@ -224,18 +243,22 @@ main(int argc, char * argv[]) {
 		exit(1);
 	}
 
+	free_data(&data);
+
 	for (;;) {
 		nfd = poll(pfd, 2, -1);
 		if (nfd > 0) {
 			if (pfd[POLL_INOTIFY].revents & POLLIN) {
 				event_result = handle_inot_events();
-				process_log_data(log_fd);
+				process_log_data(log_fd, &data);
 				if (event_result == ND_REOPEN_LOG_FILE) {
 					reopen_log_file(file_name);
 				}
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				handle_timer(pfd[POLL_TIMER].fd);
+				print_data(&data);
+				free_data(&data);
 			}
 		} else if (nfd == 0) {
 			fprintf(stderr, "D: timeout\n");
