@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <sys/timerfd.h>
 #include <unistd.h>
 
 #include "err.h"
@@ -149,6 +150,17 @@ handle_inot_events() {
 
 static
 void
+handle_timer(const int fd) {
+	uint64_t expirations;
+	ssize_t ret;
+
+	while ((ret = read(fd, &expirations, sizeof expirations)) > 0) {
+		fprintf(stderr, "D: time: %lu\n", expirations);
+	}
+}
+
+static
+void
 process_log_data(const int fd) {
 	char buf[BUFSIZ];
 	ssize_t ret;
@@ -163,6 +175,7 @@ int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
 	enum event_result event_result;
+	struct itimerspec timer_value;
 	struct pollfd pfd[2];
 	const char * argv0;
 	enum nd_err ret;
@@ -194,15 +207,35 @@ main(int argc, char * argv[]) {
 	pfd[POLL_INOTIFY].fd = ino_fd;
 	pfd[POLL_INOTIFY].events = POLLIN;
 
+	pfd[POLL_TIMER].fd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK);
+	pfd[POLL_TIMER].events = POLLIN;
+
+	if (pfd[POLL_TIMER].fd == -1) {
+		perror("E: Cannot create timer");
+		exit(1);
+	}
+
+	memset(&timer_value, 0, sizeof timer_value);
+	timer_value.it_interval.tv_sec = update;
+	timer_value.it_value.tv_sec = update;
+	ret = timerfd_settime(pfd[POLL_TIMER].fd, 0, &timer_value, NULL);
+	if (ret == -1) {
+		perror("E: Cannot set timer");
+		exit(1);
+	}
+
 	for (;;) {
-		/* TODO: Implement timer. You can look to the timerfd_create(2) man page
-		 * or you can implement your own solution. */
-		nfd = poll(pfd, 1, update * 1000);
+		nfd = poll(pfd, 2, -1);
 		if (nfd > 0) {
-			event_result = handle_inot_events();
-			process_log_data(log_fd);
-			if (event_result == ND_REOPEN_LOG_FILE) {
-				reopen_log_file(file_name);
+			if (pfd[POLL_INOTIFY].revents & POLLIN) {
+				event_result = handle_inot_events();
+				process_log_data(log_fd);
+				if (event_result == ND_REOPEN_LOG_FILE) {
+					reopen_log_file(file_name);
+				}
+			}
+			if (pfd[POLL_TIMER].revents & POLLIN) {
+				handle_timer(pfd[POLL_TIMER].fd);
 			}
 		} else if (nfd == 0) {
 			fprintf(stderr, "D: timeout\n");
