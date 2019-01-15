@@ -83,7 +83,7 @@ reopen_log_file(const char * file_name) {
 	if (wd[LOG_FILE] == -1)
 		return ND_INOTIFY;
 
-	fprintf(stderr, "D: reopening file\n");
+	//fprintf(stderr, "D: reopening file\n");
 	log_fd = open(file_name, O_RDONLY);
 	if (log_fd == -1)
 		return ND_FILE;
@@ -121,13 +121,13 @@ static
 enum event_result
 handle_inot_event(const struct inotify_event * event) {
 	if (event->wd == wd[LOG_DIR]) {
-		fprintf(stderr, "D: logdir event\n");
+		//fprintf(stderr, "D: logdir event\n");
 		if (event->len && !strcmp(event->name, "current")) {
-			fprintf(stderr, "D: there is new 'current'\n");
+			//fprintf(stderr, "D: there is new 'current'\n");
 			return ND_REOPEN_LOG_FILE;
 		}
 	} else if (event->wd == wd[LOG_FILE]) {
-		fprintf(stderr, "D: logfile evnet\n");
+		//fprintf(stderr, "D: logfile evnet\n");
 	}
 
 	return ND_NOTHING;
@@ -169,7 +169,7 @@ handle_timer(const int fd) {
 	ssize_t ret;
 
 	while ((ret = read(fd, &expirations, sizeof expirations)) > 0) {
-		fprintf(stderr, "D: time: %lu\n", expirations);
+		//fprintf(stderr, "D: time: %lu\n", expirations);
 	}
 }
 
@@ -182,7 +182,7 @@ process_log_data(const int fd, struct statistics * data) {
 	int val;
 
 	while ((ret = read(fd, buf, sizeof buf)) > 0) {
-		fprintf(stderr, "D: data len %ld\n", ret);
+		//fprintf(stderr, "D: data len %ld\n", ret);
 
 		if (strstr(buf, "tcpserver: ok")) {
 			data->tcp_ok++;
@@ -194,7 +194,7 @@ process_log_data(const int fd, struct statistics * data) {
 			val = strtoul(ptr + sizeof "tcpserver: status: " - 1, 0, 0);
 			data->tcp_status_sum += val;
 			data->tcp_status_count++;
-			fprintf(stderr, "v: %d s: %d\n", val, data->tcp_status_sum);
+			//fprintf(stderr, "v: %d s: %d\n", val, data->tcp_status_sum);
 		}
 	}
 }
@@ -318,7 +318,7 @@ main(int argc, char * argv[]) {
 			break;
 		}
 
-		fprintf(stderr, "D: loop\n");
+		//fprintf(stderr, "D: loop\n");
 	}
 
 	fputs("D: Exiting\n", stderr);
