@@ -8,7 +8,11 @@ BIN = smtpd.plugin
 
 all: $(BIN)
 
-smtpd.plugin: err.o
+## Dependencies
+smtpd.plugin: err.o smtpd.plugin.o
+
+err.o: err.c err.h
+smtpd.plugin.o: err.h
 
 .PHONY: install
 install: all
