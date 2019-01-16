@@ -365,5 +365,9 @@ main(int argc, char * argv[]) {
 
 	fputs("smtpd: D: Exiting\n", stderr);
 
+	close(ino_fd);
+	close(log_fd);
+	close(pfd[POLL_TIMER].fd);
+
 	return ret;
 }
