@@ -6,6 +6,7 @@ CFLAGS += -Wall -pedantic
 
 BIN = smtpd.plugin
 
+.PHONY: all
 all: $(BIN)
 
 ## Dependencies
