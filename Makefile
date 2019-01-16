@@ -3,6 +3,9 @@ PLUGIN_DIR = ${DESTDIR}${PREFIX}/libexec/netdata/plugins.d
 
 CFLAGS ?= -O2 -pipe
 CFLAGS += -Wall -pedantic
+CFLAGS += -std=c11
+
+CPPFLAGS += -D_GNU_SOURCE
 
 BIN = smtpd.plugin
 
