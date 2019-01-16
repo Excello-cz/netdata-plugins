@@ -226,7 +226,7 @@ process_log_data(const int fd, struct statistics * data) {
 
 static
 void
-free_data(struct statistics * data) {
+clear_data(struct statistics * data) {
 	memset(data, 0, sizeof * data);
 }
 
@@ -337,7 +337,7 @@ main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	free_data(&data);
+	clear_data(&data);
 	fputs("smtpd: D: Starting smptd.plugin\n", stderr);
 	print_header();
 
@@ -354,7 +354,7 @@ main(int argc, char * argv[]) {
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				handle_timer(pfd[POLL_TIMER].fd);
 				print_data(&data);
-				free_data(&data);
+				clear_data(&data);
 			}
 		} else if (nfd == 0) {
 			fputs("smtpd: D: timeout\n", stderr);
