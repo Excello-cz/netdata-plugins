@@ -1,5 +1,5 @@
-CFLAGS ?= -O2
-CFLAGS += -pipe -Wall -pedantic
+CFLAGS ?= -O2 -pipe
+CFLAGS += -Wall -pedantic
 
 BIN = smtpd.plugin
 
