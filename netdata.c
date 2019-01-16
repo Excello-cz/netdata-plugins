@@ -41,10 +41,10 @@ nd_disable() {
 
 void
 nd_dimension(const char * id, const char * name, enum nd_algorithm alg,
-		int multiplier, int divisor, int hidden) {
+		int multiplier, int divisor, enum nd_visibility visibility) {
 	printf("DIMENSION %s '%s' %s %d %d",
 		id, check_null(name), nd_algorithm_str[alg], multiplier, divisor);
-	if (hidden) {
+	if (visibility == ND_HIDDEN) {
 		fputs(" hidden", stdout);
 	}
 	putchar('\n');

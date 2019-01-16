@@ -1,3 +1,8 @@
+enum nd_visibility {
+	ND_VISIBLE = 0,
+	ND_HIDDEN,
+};
+
 enum nd_algorithm {
 	ND_ALG_ABSOLUTE,
 	ND_ALG_INCREMENTAL,
@@ -29,7 +34,7 @@ void nd_dimension(
 	enum nd_algorithm algorithm,
 	int multiplier,
 	int divisor,
-	int hidden
+	enum nd_visibility visibility
 );
 
 void nd_begin(const char *);
