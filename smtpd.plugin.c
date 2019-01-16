@@ -286,15 +286,17 @@ main(int argc, char * argv[]) {
 
 	argv0 = *argv; argv++; argc--;
 
-	if (argc >= 1) {
+	if (argc > 0) {
 		update = atoi(*argv);
+		fprintf(stderr, "smtpd: D: setting update period to: %d s\n", update);
 		argv++; argc--;
 	} else {
 		fprintf(stderr, "Usage: %s <update> [path]\n", argv0);
 	}
 
-	if (argc) {
+	if (argc > 0) {
 		file_name = *argv;
+		fprintf(stderr, "smtpd: D: setting watched log file to: %s\n", file_name);
 		argv++; argc--;
 	}
 
@@ -302,9 +304,13 @@ main(int argc, char * argv[]) {
 	signal(SIGQUIT, sigexit);
 
 	ret = init_inotifier(file_name);
+	if (ret != ND_SUCCUESS) {
+		fprintf(stderr, "smtpd: E: cannot establish inotifier: %s\n", nd_err_to_str(ret));
+		exit(1);
+	}
 	log_fd = open(file_name, O_RDONLY);
 	if (log_fd == -1) {
-		perror("E: Cannot open file");
+		perror("smtpd: E: Cannot open file");
 		exit(1);
 	}
 	lseek(log_fd, 0, SEEK_END);
@@ -316,7 +322,7 @@ main(int argc, char * argv[]) {
 	pfd[POLL_TIMER].events = POLLIN;
 
 	if (pfd[POLL_TIMER].fd == -1) {
-		perror("E: Cannot create timer");
+		perror("smtpd: E: Cannot create timer");
 		exit(1);
 	}
 
@@ -325,12 +331,12 @@ main(int argc, char * argv[]) {
 	timer_value.it_value.tv_sec = update;
 	ret = timerfd_settime(pfd[POLL_TIMER].fd, 0, &timer_value, NULL);
 	if (ret == -1) {
-		perror("E: Cannot set timer");
+		perror("smtpd: E: Cannot set timer");
 		exit(1);
 	}
 
 	free_data(&data);
-	fprintf(stderr, "D: Starting smptd.plugin");
+	fputs("smtpd: D: Starting smptd.plugin\n", stderr);
 	print_header();
 
 	for (run = 1; run ;) {
@@ -349,17 +355,15 @@ main(int argc, char * argv[]) {
 				free_data(&data);
 			}
 		} else if (nfd == 0) {
-			fprintf(stderr, "D: timeout\n");
+			fputs("smtpd: D: timeout\n", stderr);
 			continue;
 		} else {
-			perror("E: poll error");
+			perror("smtpd: E: poll error");
 			break;
 		}
-
-		//fprintf(stderr, "D: loop\n");
 	}
 
-	fputs("D: Exiting\n", stderr);
+	fputs("smtpd: D: Exiting\n", stderr);
 
 	return ret;
 }
