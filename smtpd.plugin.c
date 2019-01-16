@@ -34,6 +34,7 @@ enum event_result {
 struct statistics {
 	int tcp_ok;
 	int tcp_deny;
+	int tcp_status;
 	int tcp_status_sum;
 	int tcp_status_count;
 
@@ -228,7 +229,9 @@ process_log_data(const int fd, struct statistics * data) {
 static
 void
 clear_data(struct statistics * data) {
+	int tmp = data->tcp_status;
 	memset(data, 0, sizeof * data);
+	data->tcp_status = tmp;
 }
 
 static
@@ -241,7 +244,7 @@ print_header() {
 	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
 	nd_chart("qmail.smtpd_status", "smtpd statuses", "Qmail SMTPD Statuses",
-		"'average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
+		"average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_status_average", "status average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
 
 	nd_chart("qmail.smtpd_end_status", "smtpd end statuses", "Qmail SMTPD End Statuses",
@@ -255,6 +258,13 @@ print_header() {
 
 static
 void
+postprocess_data(struct statistics * data) {
+	if (data->tcp_status_count)
+		data->tcp_status = data->tcp_status_sum * 100 / data->tcp_status_count;
+}
+
+static
+void
 print_data(const struct statistics * data) {
 	nd_begin("qmail.smtpd");
 	nd_set("tcp_ok", data->tcp_ok);
@@ -262,8 +272,7 @@ print_data(const struct statistics * data) {
 	nd_end();
 
 	nd_begin("qmail.smtpd_status");
-	nd_set("tcp_status_average",
-		data->tcp_status_count ? data->tcp_status_sum * 100 / data->tcp_status_count : 0);
+	nd_set("tcp_status_average", data->tcp_status);
 	nd_end();
 
 	nd_begin("qmail.smtpd_end_status");
@@ -341,7 +350,7 @@ main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	clear_data(&data);
+	memset(&data, 0, sizeof data);
 	fputs("smtpd: D: Starting smptd.plugin\n", stderr);
 	print_header();
 
@@ -357,6 +366,7 @@ main(int argc, char * argv[]) {
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				handle_timer(pfd[POLL_TIMER].fd);
+				postprocess_data(&data);
 				print_data(&data);
 				clear_data(&data);
 			}
