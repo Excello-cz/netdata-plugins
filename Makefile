@@ -4,6 +4,7 @@ PLUGIN_DIR = ${DESTDIR}${PREFIX}/libexec/netdata/plugins.d
 CFLAGS ?= -O2 -pipe
 CFLAGS += -Wall -pedantic
 CFLAGS += -std=c11
+CFLAGS += -Werror=implicit-function-declaration
 
 CPPFLAGS += -D_GNU_SOURCE
 
