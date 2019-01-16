@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "err.h"
+#include "netdata.h"
 
 #define LOG_DIR  0
 #define LOG_FILE 1
@@ -234,40 +235,43 @@ static
 void
 print_header() {
 	/*            type.id       name           title                units       family context chartype     */
-	puts("CHART qmail.smtpd 'smtpd qmail' 'Qmail SMTPD' '# smtpd connections' smtpd con area");
-	puts("DIMENSION tcp_ok 'TCP OK' absolute 1 1");
-	puts("DIMENSION tcp_deny 'TCP Deny' absolute 1 1");
+	nd_chart("qmail.smtpd", "smtpd qmail", "Qmail SMTPD", "# smtpd connections",
+		"smtpd", "con", ND_CHART_TYPE_AREA);
+	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
-	puts("CHART qmail.smtpd_status 'smtpd statuses' 'Qmail SMTPD Statuses' 'average status' smtpd");
-	puts("DIMENSION tcp_status_average 'status average' absolute 1 100");
+	nd_chart("qmail.smtpd_status", "smtpd statuses", "Qmail SMTPD Statuses",
+		"'average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
+	nd_dimension("tcp_status_average", "status average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
 
-	puts("CHART qmail.smtpd_end_status 'smtpd end statuses' 'Qmail SMTPD End Statuses' '# smtpd end statuses' smtpd");
-	puts("DIMENSION tcp_end_status_0 0 absolute 1 1");
-	puts("DIMENSION tcp_end_status_256 256 absolute 1 1");
-	puts("DIMENSION tcp_end_status_25600 25600 absolute 1 1");
-	puts("DIMENSION tcp_end_status_others other absolute 1 1");
+	nd_chart("qmail.smtpd_end_status", "smtpd end statuses", "Qmail SMTPD End Statuses",
+		"# smtpd end statuses", "smtpd", NULL, ND_CHART_TYPE_LINE);
+	nd_dimension("tcp_end_status_0",      "0",     ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("tcp_end_status_256",    "256",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("tcp_end_status_25600",  "25600", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("tcp_end_status_others", "other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	fflush(stdout);
 }
 
 static
 void
 print_data(const struct statistics * data) {
-	puts("BEGIN qmail.smtpd");
-	printf("SET tcp_ok %d\n", data->tcp_ok);
-	printf("SET tcp_deny %d\n", -data->tcp_deny);
-	puts("END");
+	nd_begin("qmail.smtpd");
+	nd_set("tcp_ok", data->tcp_ok);
+	nd_set("tcp_deny", -data->tcp_deny);
+	nd_end();
 
-	puts("BEGIN qmail.smtpd_status");
-	printf("SET tcp_status_average %d\n",
+	nd_begin("qmail.smtpd_status");
+	nd_set("tcp_status_average",
 		data->tcp_status_count ? data->tcp_status_sum * 100 / data->tcp_status_count : 0);
-	puts("END");
+	nd_end();
 
-	puts("BEGIN qmail.smtpd_end_status");
-	printf("SET tcp_end_status_0 %d\n", data->tcp_end_status_0);
-	printf("SET tcp_end_status_256 %d\n", data->tcp_end_status_256);
-	printf("SET tcp_end_status_25600 %d\n", data->tcp_end_status_25600);
-	printf("SET tcp_end_status_others %d\n", data->tcp_end_status_others);
-	puts("END");
+	nd_begin("qmail.smtpd_end_status");
+	nd_set("tcp_end_status_0", data->tcp_end_status_0);
+	nd_set("tcp_end_status_256", data->tcp_end_status_256);
+	nd_set("tcp_end_status_25600", data->tcp_end_status_25600);
+	nd_set("tcp_end_status_others", data->tcp_end_status_others);
+	nd_end();
 
 	fflush(stdout);
 }
