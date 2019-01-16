@@ -282,6 +282,7 @@ main(int argc, char * argv[]) {
 	const char * argv0;
 	enum nd_err ret;
 	int update = 1;
+	int timer_fd;
 	int nfd;
 
 	argv0 = *argv; argv++; argc--;
@@ -318,10 +319,11 @@ main(int argc, char * argv[]) {
 	pfd[POLL_INOTIFY].fd = ino_fd;
 	pfd[POLL_INOTIFY].events = POLLIN;
 
-	pfd[POLL_TIMER].fd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK);
+	timer_fd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK);
+	pfd[POLL_TIMER].fd = timer_fd;
 	pfd[POLL_TIMER].events = POLLIN;
 
-	if (pfd[POLL_TIMER].fd == -1) {
+	if (timer_fd == -1) {
 		perror("smtpd: E: Cannot create timer");
 		exit(1);
 	}
@@ -329,7 +331,7 @@ main(int argc, char * argv[]) {
 	memset(&timer_value, 0, sizeof timer_value);
 	timer_value.it_interval.tv_sec = update;
 	timer_value.it_value.tv_sec = update;
-	ret = timerfd_settime(pfd[POLL_TIMER].fd, 0, &timer_value, NULL);
+	ret = timerfd_settime(timer_fd, 0, &timer_value, NULL);
 	if (ret == -1) {
 		perror("smtpd: E: Cannot set timer");
 		exit(1);
@@ -367,7 +369,7 @@ main(int argc, char * argv[]) {
 
 	close(ino_fd);
 	close(log_fd);
-	close(pfd[POLL_TIMER].fd);
+	close(timer_fd);
 
 	return ret;
 }
