@@ -20,6 +20,7 @@ smtpd.plugin: err.o smtpd.plugin.o
 
 err.o: err.c err.h
 smtpd.plugin.o: err.h
+netdata.o: netdata.c netdata.h
 
 .PHONY: install
 install: all
