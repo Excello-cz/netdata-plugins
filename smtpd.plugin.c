@@ -374,6 +374,8 @@ main(int argc, char * argv[]) {
 			fputs("smtpd: D: timeout\n", stderr);
 			continue;
 		} else {
+			if (errno == EINTR)
+				continue;
 			perror("smtpd: E: poll error");
 			break;
 		}
