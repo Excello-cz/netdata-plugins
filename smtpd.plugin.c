@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "err.h"
+#include "flush.h"
 #include "netdata.h"
 
 #define LOG_DIR  0
@@ -175,17 +176,6 @@ handle_inot_events() {
 	}
 
 	return ret;
-}
-
-static
-void
-handle_timer(const int fd) {
-	uint64_t expirations;
-	ssize_t ret;
-
-	while ((ret = read(fd, &expirations, sizeof expirations)) > 0) {
-		//fprintf(stderr, "D: time: %lu\n", expirations);
-	}
 }
 
 static
@@ -392,7 +382,7 @@ main(int argc, char * argv[]) {
 				}
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
-				handle_timer(pfd[POLL_TIMER].fd);
+				flush_read_fd(pfd[POLL_TIMER].fd);
 				postprocess_data(&data);
 				print_data(&data);
 				clear_data(&data);

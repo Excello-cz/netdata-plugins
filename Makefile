@@ -16,11 +16,11 @@ BIN = smtpd.plugin
 all: $(BIN)
 
 ## Dependencies
-smtpd.plugin: err.o smtpd.plugin.o netdata.o
+smtpd.plugin: err.o flush.o smtpd.plugin.o netdata.o
 
 err.o: err.c err.h
 flush.o: flush.c flush.h
-smtpd.plugin.o: err.h netdata.h
+smtpd.plugin.o: err.h flush.h netdata.h
 netdata.o: netdata.c netdata.h
 
 .PHONY: install
