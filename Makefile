@@ -19,6 +19,7 @@ all: $(BIN)
 smtpd.plugin: err.o smtpd.plugin.o netdata.o
 
 err.o: err.c err.h
+flush.o: flush.c flush.h
 smtpd.plugin.o: err.h netdata.h
 netdata.o: netdata.c netdata.h
 
