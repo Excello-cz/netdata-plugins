@@ -10,7 +10,7 @@ CFLAGS += -Werror=implicit-function-declaration
 
 CPPFLAGS += -D_GNU_SOURCE
 
-BIN = smtpd.plugin
+BIN = qmail.plugin smtpd.plugin
 
 .PHONY: all
 all: $(BIN)

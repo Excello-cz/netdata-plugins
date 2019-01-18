@@ -1,3 +1,4 @@
 *.o
 
 smtpd.plugin
+qmail.plugin
