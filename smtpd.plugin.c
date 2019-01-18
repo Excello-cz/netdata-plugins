@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
+#include <sys/signalfd.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
 
@@ -18,8 +19,11 @@
 
 #define POLL_INOTIFY 0
 #define POLL_TIMER   1
+#define POLL_SIGNAL  2
 
 #define DEFALT_PATH "/var/log/qmail/qmail-smtpd/current"
+
+#define LEN(x) ( sizeof x / sizeof * x )
 
 static int log_fd; /* smtp log file descriptor */
 static int ino_fd; /* inotify file descriptor */
@@ -45,7 +49,11 @@ struct statistics {
 };
 
 static
-void sigexit(int i) {
+void
+process_signal_fd(const int fd) {
+	char buf[BUFSIZ];
+	while (read(fd, buf, sizeof buf) > 0)
+		;
 	run = 0;
 }
 
@@ -291,10 +299,12 @@ main(int argc, char * argv[]) {
 	enum event_result event_result;
 	struct itimerspec timer_value;
 	struct statistics data;
-	struct pollfd pfd[2];
+	sigset_t signal_mask;
+	struct pollfd pfd[3];
 	const char * argv0;
 	enum nd_err ret;
 	int update = 1;
+	int signal_fd;
 	int timer_fd;
 	int nfd;
 
@@ -314,8 +324,21 @@ main(int argc, char * argv[]) {
 		argv++; argc--;
 	}
 
-	signal(SIGTERM, sigexit);
-	signal(SIGQUIT, sigexit);
+	sigemptyset(&signal_mask);
+	sigaddset(&signal_mask, SIGQUIT);
+	sigaddset(&signal_mask, SIGTERM);
+	sigaddset(&signal_mask, SIGINT);
+	if (sigprocmask(SIG_BLOCK, &signal_mask, NULL) == -1) {
+		perror("sigprocmask");
+		exit(1);
+	}
+	signal_fd = signalfd(-1, &signal_mask, SFD_NONBLOCK | SFD_CLOEXEC);
+	if (signal_fd == -1) {
+		perror("signalfd");
+		exit(1);
+	}
+	pfd[POLL_SIGNAL].fd = signal_fd;
+	pfd[POLL_SIGNAL].events = POLLIN;
 
 	ret = init_inotifier(file_name);
 	if (ret != ND_SUCCUESS) {
@@ -355,8 +378,12 @@ main(int argc, char * argv[]) {
 	print_header();
 
 	for (run = 1; run ;) {
-		nfd = poll(pfd, 2, -1);
+		nfd = poll(pfd, LEN(pfd), -1);
 		if (nfd > 0) {
+			if (pfd[POLL_SIGNAL].revents & POLLIN) {
+				process_signal_fd(signal_fd);
+				continue;
+			}
 			if (pfd[POLL_INOTIFY].revents & POLLIN) {
 				event_result = handle_inot_events();
 				process_log_data(log_fd, &data);
@@ -386,6 +413,7 @@ main(int argc, char * argv[]) {
 	close(ino_fd);
 	close(log_fd);
 	close(timer_fd);
+	close(signal_fd);
 
 	return ret;
 }
