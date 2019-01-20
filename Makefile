@@ -17,6 +17,7 @@ all: $(BIN)
 
 ## Dependencies
 smtpd.plugin: err.o flush.o smtpd.plugin.o netdata.o
+qmail.plugin: flush.o
 
 err.o: err.c err.h
 flush.o: flush.c flush.h

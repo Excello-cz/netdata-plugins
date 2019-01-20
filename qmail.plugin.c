@@ -1,13 +1,20 @@
 #include <dirent.h>
 #include <errno.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/timerfd.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "flush.h"
+
 #define DEFAULT_PATH "/var/log/qmail"
+#define POLL_TIMER   0
+
+#define LEN(x) ( sizeof x / sizeof * x )
 
 static
 void
@@ -65,9 +72,13 @@ detect_log_dirs() {
 
 int
 main(int argc, const char * argv[]) {
+	struct itimerspec timer_value;
+	struct pollfd pfd[1];
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
+	int timer_fd;
+	int ret;
 
 	path = DEFAULT_PATH;
 	argv0 = *argv; argv++; argc--;
@@ -93,6 +104,42 @@ main(int argc, const char * argv[]) {
 	}
 
 	detect_log_dirs();
+
+	timer_fd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK);
+	pfd[POLL_TIMER].fd = timer_fd;
+	pfd[POLL_TIMER].events = POLLIN;
+
+	if (timer_fd == -1) {
+		perror("E: Cannot create timer");
+		exit(1);
+	}
+
+	memset(&timer_value, 0, sizeof timer_value);
+	timer_value.it_interval.tv_sec = timeout;
+	timer_value.it_value.tv_sec = timeout;
+	ret = timerfd_settime(timer_fd, 0, &timer_value, NULL);
+	if (ret == -1) {
+		perror("E: Cannot set timer");
+		exit(1);
+	}
+
+	for (;;) {
+		switch (poll(pfd, LEN(pfd), -1)) {
+		case -1:
+			perror("poll");
+			break;
+		case 0:
+			fputs("timeout\n", stderr);
+			continue;
+		default:
+			if (pfd[POLL_TIMER].revents & POLLIN) {
+				fprintf(stderr, "time to print\n");
+				flush_read_fd(timer_fd);
+			}
+		}
+	}
+
+	close(timer_fd);
 
 	return 0;
 }
