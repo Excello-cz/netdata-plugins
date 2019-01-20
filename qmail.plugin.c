@@ -70,15 +70,38 @@ detect_log_dirs() {
 	closedir(dir);
 }
 
+static
+int
+prepare_timer_fd(const int timeout) {
+	struct itimerspec timer_value;
+	int ret, fd;
+
+	fd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK);
+
+	if (fd == -1) {
+		perror("E: Cannot create timer");
+		exit(1);
+	}
+
+	memset(&timer_value, 0, sizeof timer_value);
+	timer_value.it_interval.tv_sec = timeout;
+	timer_value.it_value.tv_sec = timeout;
+	ret = timerfd_settime(fd, 0, &timer_value, NULL);
+
+	if (ret == -1) {
+		perror("E: Cannot set timer");
+		exit(1);
+	}
+	return fd;
+}
+
 int
 main(int argc, const char * argv[]) {
-	struct itimerspec timer_value;
 	struct pollfd pfd[1];
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
 	int timer_fd;
-	int ret;
 
 	path = DEFAULT_PATH;
 	argv0 = *argv; argv++; argc--;
@@ -105,23 +128,9 @@ main(int argc, const char * argv[]) {
 
 	detect_log_dirs();
 
-	timer_fd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK);
+	timer_fd = prepare_timer_fd(timeout);
 	pfd[POLL_TIMER].fd = timer_fd;
 	pfd[POLL_TIMER].events = POLLIN;
-
-	if (timer_fd == -1) {
-		perror("E: Cannot create timer");
-		exit(1);
-	}
-
-	memset(&timer_value, 0, sizeof timer_value);
-	timer_value.it_interval.tv_sec = timeout;
-	timer_value.it_value.tv_sec = timeout;
-	ret = timerfd_settime(timer_fd, 0, &timer_value, NULL);
-	if (ret == -1) {
-		perror("E: Cannot set timer");
-		exit(1);
-	}
 
 	for (;;) {
 		switch (poll(pfd, LEN(pfd), -1)) {
