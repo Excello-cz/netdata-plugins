@@ -10,9 +10,15 @@
 #include <unistd.h>
 
 #include "flush.h"
+#include "signal.h"
 
 #define DEFAULT_PATH "/var/log/qmail"
-#define POLL_TIMER   0
+
+enum poll {
+	POLL_SIGNAL = 0,
+	POLL_TIMER,
+	POLL_LENGTH
+};
 
 #define LEN(x) ( sizeof x / sizeof * x )
 
@@ -97,11 +103,13 @@ prepare_timer_fd(const int timeout) {
 
 int
 main(int argc, const char * argv[]) {
-	struct pollfd pfd[1];
+	struct pollfd pfd[POLL_LENGTH];
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
+	int signal_fd;
 	int timer_fd;
+	int run;
 
 	path = DEFAULT_PATH;
 	argv0 = *argv; argv++; argc--;
@@ -131,8 +139,11 @@ main(int argc, const char * argv[]) {
 	timer_fd = prepare_timer_fd(timeout);
 	pfd[POLL_TIMER].fd = timer_fd;
 	pfd[POLL_TIMER].events = POLLIN;
+	signal_fd = prepare_signal_fd();
+	pfd[POLL_SIGNAL].fd = signal_fd;
+	pfd[POLL_SIGNAL].events = POLLIN;
 
-	for (;;) {
+	for (run = 1; run;) {
 		switch (poll(pfd, LEN(pfd), -1)) {
 		case -1:
 			perror("poll");
@@ -141,6 +152,11 @@ main(int argc, const char * argv[]) {
 			fputs("timeout\n", stderr);
 			continue;
 		default:
+			if (pfd[POLL_SIGNAL].revents & POLLIN) {
+				flush_read_fd(signal_fd);
+				run = 0;
+				continue;
+			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				fprintf(stderr, "time to print\n");
 				flush_read_fd(timer_fd);
@@ -149,6 +165,7 @@ main(int argc, const char * argv[]) {
 	}
 
 	close(timer_fd);
+	close(signal_fd);
 
 	return 0;
 }

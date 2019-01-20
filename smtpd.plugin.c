@@ -2,18 +2,17 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <poll.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
-#include <sys/signalfd.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
 
 #include "err.h"
 #include "flush.h"
 #include "netdata.h"
+#include "signal.h"
 
 #define LOG_DIR  0
 #define LOG_FILE 1
@@ -29,7 +28,6 @@
 static int log_fd; /* smtp log file descriptor */
 static int ino_fd; /* inotify file descriptor */
 static int wd[2];  /* Watch descriptors for inotify */
-static int run;
 
 enum event_result {
 	ND_NOTHING,
@@ -48,15 +46,6 @@ struct statistics {
 	int tcp_end_status_25600;
 	int tcp_end_status_others;
 };
-
-static
-void
-process_signal_fd(const int fd) {
-	char buf[BUFSIZ];
-	while (read(fd, buf, sizeof buf) > 0)
-		;
-	run = 0;
-}
 
 static
 enum nd_err
@@ -289,7 +278,6 @@ main(int argc, char * argv[]) {
 	enum event_result event_result;
 	struct itimerspec timer_value;
 	struct statistics data;
-	sigset_t signal_mask;
 	struct pollfd pfd[3];
 	const char * argv0;
 	enum nd_err ret;
@@ -297,6 +285,7 @@ main(int argc, char * argv[]) {
 	int signal_fd;
 	int timer_fd;
 	int nfd;
+	int run;
 
 	argv0 = *argv; argv++; argc--;
 
@@ -314,19 +303,7 @@ main(int argc, char * argv[]) {
 		argv++; argc--;
 	}
 
-	sigemptyset(&signal_mask);
-	sigaddset(&signal_mask, SIGQUIT);
-	sigaddset(&signal_mask, SIGTERM);
-	sigaddset(&signal_mask, SIGINT);
-	if (sigprocmask(SIG_BLOCK, &signal_mask, NULL) == -1) {
-		perror("sigprocmask");
-		exit(1);
-	}
-	signal_fd = signalfd(-1, &signal_mask, SFD_NONBLOCK | SFD_CLOEXEC);
-	if (signal_fd == -1) {
-		perror("signalfd");
-		exit(1);
-	}
+	signal_fd = prepare_signal_fd();
 	pfd[POLL_SIGNAL].fd = signal_fd;
 	pfd[POLL_SIGNAL].events = POLLIN;
 
@@ -371,7 +348,8 @@ main(int argc, char * argv[]) {
 		nfd = poll(pfd, LEN(pfd), -1);
 		if (nfd > 0) {
 			if (pfd[POLL_SIGNAL].revents & POLLIN) {
-				process_signal_fd(signal_fd);
+				flush_read_fd(signal_fd);
+				run = 0;
 				continue;
 			}
 			if (pfd[POLL_INOTIFY].revents & POLLIN) {
