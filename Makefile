@@ -16,15 +16,16 @@ BIN = qmail.plugin smtpd.plugin
 all: $(BIN)
 
 ## Dependencies
-smtpd.plugin: err.o flush.o smtpd.plugin.o netdata.o signal.o
-qmail.plugin: qmail.plugin.o flush.o signal.o
+smtpd.plugin: err.o flush.o smtpd.plugin.o netdata.o signal.o timer.o
+qmail.plugin: qmail.plugin.o flush.o signal.o timer.o
 
 err.o: err.c err.h
 flush.o: flush.c flush.h
-smtpd.plugin.o: err.h flush.h netdata.h
-qmail.plugin.o: flush.h signal.h
+smtpd.plugin.o: err.h flush.h netdata.h timer.o
+qmail.plugin.o: flush.h signal.h timer.h
 signal.o: signal.c signal.h
 netdata.o: netdata.c netdata.h
+timer.o: timer.c timer.h
 
 .PHONY: install
 install: all

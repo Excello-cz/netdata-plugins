@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/timerfd.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "flush.h"
 #include "signal.h"
+#include "timer.h"
 
 #define DEFAULT_PATH "/var/log/qmail"
 
@@ -76,31 +76,6 @@ detect_log_dirs() {
 	closedir(dir);
 }
 
-static
-int
-prepare_timer_fd(const int timeout) {
-	struct itimerspec timer_value;
-	int ret, fd;
-
-	fd = timerfd_create(CLOCK_REALTIME, TFD_CLOEXEC | TFD_NONBLOCK);
-
-	if (fd == -1) {
-		perror("E: Cannot create timer");
-		exit(1);
-	}
-
-	memset(&timer_value, 0, sizeof timer_value);
-	timer_value.it_interval.tv_sec = timeout;
-	timer_value.it_value.tv_sec = timeout;
-	ret = timerfd_settime(fd, 0, &timer_value, NULL);
-
-	if (ret == -1) {
-		perror("E: Cannot set timer");
-		exit(1);
-	}
-	return fd;
-}
-
 int
 main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
@@ -139,6 +114,7 @@ main(int argc, const char * argv[]) {
 	timer_fd = prepare_timer_fd(timeout);
 	pfd[POLL_TIMER].fd = timer_fd;
 	pfd[POLL_TIMER].events = POLLIN;
+
 	signal_fd = prepare_signal_fd();
 	pfd[POLL_SIGNAL].fd = signal_fd;
 	pfd[POLL_SIGNAL].events = POLLIN;
