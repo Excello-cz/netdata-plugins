@@ -66,8 +66,10 @@ detect_log_dirs() {
 			fprintf(stderr, "D: %s ", dir_name);
 			if (strstr(dir_name, "send")) {
 				fputs("it is send log\n", stderr);
+				/* TODO: register send notifier for this directory */
 			} else if (strstr(dir_name, "smtp")) {
 				fputs("it is smtp log\n", stderr);
+				/* TODO: register smtp notifier for this directory */
 			} else
 				fputs("I don't know\n", stderr);
 		}
@@ -102,6 +104,11 @@ main(int argc, const char * argv[]) {
 
 	if (is_directory(path) < 1) {
 		fprintf(stderr, "Cannot change dir to %s, it is not a directory\n", path);
+		/* TODO: Maybe we can distinguish all return values
+		 *  1 - it is a directory
+		 *  0 - it is not a directory
+		 * -1 - an error; file does not exit, etc.
+		 */
 		exit(1);
 	}
 	if (chdir(path) == -1) {
@@ -133,9 +140,17 @@ main(int argc, const char * argv[]) {
 				run = 0;
 				continue;
 			}
+			/* TODO: dir event notifier:
+			 *
+			 * - it detects new directories in DEFAULT_PATH
+			 * - it detects 'current' log rotations and reopes and reregister it again
+			 * - it detects change in every registerd 'current' log and process appended lines
+			 */
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				fprintf(stderr, "time to print\n");
 				flush_read_fd(timer_fd);
+				/* TODO: postprocess collected data */
+				/* TODO: print out all statistics for all registered directories */
 			}
 		}
 	}
