@@ -83,6 +83,10 @@ main(int argc, const char * argv[]) {
 		argv++; argc--;
 	}
 
+	if (is_directory(path) < 1) {
+		fprintf(stderr, "Cannot change dir to %s, it is not a directory\n", path);
+		exit(1);
+	}
 	if (chdir(path) == -1) {
 		fprintf(stderr, "Cannot change directory to '%s': %s\n", path, strerror(errno));
 		exit(1);
