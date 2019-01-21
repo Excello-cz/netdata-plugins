@@ -1,5 +1,5 @@
 enum nd_err {
-	ND_SUCCUESS,
+	ND_SUCCESS,
 	ND_ERROR,
 
 	ND_ALLOC,

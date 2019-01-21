@@ -63,7 +63,7 @@ set_wd_for_log_directory(const int fd, const char * file_name) {
 
 	free(file_name_copy);
 
-	return ND_SUCCUESS;
+	return ND_SUCCESS;
 }
 
 static
@@ -74,7 +74,7 @@ set_wd_for_log_file(const int fd, const char * file_name) {
 	if (wd[LOG_FILE] == -1)
 		return ND_INOTIFY;
 
-	return ND_SUCCUESS;
+	return ND_SUCCESS;
 }
 
 static
@@ -93,7 +93,7 @@ reopen_log_file(const char * file_name) {
 	if (log_fd == -1)
 		return ND_FILE;
 
-	return ND_SUCCUESS;
+	return ND_SUCCESS;
 }
 
 static
@@ -108,18 +108,18 @@ init_inotifier(const char * file_name) {
 	}
 
 	ret = set_wd_for_log_directory(ino_fd, file_name);
-	if (ret != ND_SUCCUESS) {
+	if (ret != ND_SUCCESS) {
 		fprintf(stderr, "E: Cannot watch log dir: %s\n", nd_err_to_str(ret));
 		return ret;
 	}
 
 	ret = set_wd_for_log_file(ino_fd, file_name);
-	if (ret != ND_SUCCUESS) {
+	if (ret != ND_SUCCESS) {
 		fprintf(stderr, "E: Cannot watch log file: %s\n", nd_err_to_str(ret));
 		return ret;
 	}
 
-	return ND_SUCCUESS;
+	return ND_SUCCESS;
 }
 
 static
@@ -307,7 +307,7 @@ main(int argc, char * argv[]) {
 	pfd[POLL_SIGNAL].events = POLLIN;
 
 	ret = init_inotifier(file_name);
-	if (ret != ND_SUCCUESS) {
+	if (ret != ND_SUCCESS) {
 		fprintf(stderr, "smtpd: E: cannot establish inotifier: %s\n", nd_err_to_str(ret));
 		exit(1);
 	}
