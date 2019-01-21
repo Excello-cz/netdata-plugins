@@ -165,7 +165,7 @@ process_log_data(const int fd, struct statistics * data) {
 
 	while ((ret = read(fd, buf, sizeof buf - 1)) > 0) {
 		buf[ret] = '\0';
-		process_smtp(buf, data);
+		smtp_func->process(buf, data);
 	}
 }
 
@@ -224,7 +224,7 @@ main(int argc, char * argv[]) {
 
 	memset(&data, 0, sizeof data);
 	fputs("smtpd: D: Starting smptd.plugin\n", stderr);
-	print_smtp_header();
+	smtp_func->print_hdr();
 
 	for (run = 1; run ;) {
 		nfd = poll(pfd, LEN(pfd), -1);

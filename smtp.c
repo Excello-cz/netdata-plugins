@@ -6,6 +6,7 @@
 #include "netdata.h"
 #include "smtp.h"
 
+static
 void
 process_smtp(const char * line, struct statistics * data) {
 	char * ptr;
@@ -45,6 +46,7 @@ process_smtp(const char * line, struct statistics * data) {
 	}
 }
 
+static
 void
 print_smtp_header() {
 	/*            type.id       name           title                units       family context chartype     */
@@ -66,6 +68,7 @@ print_smtp_header() {
 	fflush(stdout);
 }
 
+static
 void
 print_smtp_data(const struct statistics * data) {
 	nd_begin("qmail.smtpd");
@@ -104,8 +107,9 @@ postprocess_data(struct statistics * data) {
 
 static
 struct stat_func smtp = {
+	.print_hdr = &print_smtp_header,
 	.print = &print_smtp_data,
-	.process = &print_smtp_data,
+	.process = &process_smtp,
 	.postprocess = &postprocess_data,
 	.clear = &clear_smtp_data,
 };

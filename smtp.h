@@ -11,9 +11,5 @@ struct statistics {
 	int tcp_end_status_others;
 };
 
-void print_smtp_header();
-void print_smtp_data();
-void process_smtp(const char *, struct statistics *);
-
 extern
 struct stat_func * smtp_func;
