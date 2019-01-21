@@ -17,6 +17,7 @@
 enum poll {
 	POLL_SIGNAL = 0,
 	POLL_TIMER,
+	POLL_FS_EVENT,
 	POLL_LENGTH
 };
 
@@ -86,6 +87,7 @@ main(int argc, const char * argv[]) {
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
+	int fs_event_fd;
 	int signal_fd;
 	int timer_fd;
 	int run;
@@ -128,6 +130,10 @@ main(int argc, const char * argv[]) {
 	pfd[POLL_SIGNAL].fd = signal_fd;
 	pfd[POLL_SIGNAL].events = POLLIN;
 
+	fs_event_fd = prepare_fs_event_fd();
+	pfd[POLL_FS_EVENT].fd = fs_event_fd;
+	pfd[POLL_FS_EVENT].events = POLLIN;
+
 	for (run = 1; run;) {
 		switch (poll(pfd, LEN(pfd), -1)) {
 		case -1:
@@ -142,12 +148,15 @@ main(int argc, const char * argv[]) {
 				run = 0;
 				continue;
 			}
+			if (pfd[POLL_FS_EVENT].revents & POLLIN) {
 			/* TODO: dir event notifier:
 			 *
 			 * - it detects new directories in DEFAULT_PATH
 			 * - it detects 'current' log rotations and reopes and reregister it again
 			 * - it detects change in every registerd 'current' log and process appended lines
 			 */
+				fputs("fs event\n", stderr);
+			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				fprintf(stderr, "time to print\n");
 				flush_read_fd(timer_fd);
@@ -157,6 +166,7 @@ main(int argc, const char * argv[]) {
 		}
 	}
 
+	close(fs_event_fd);
 	close(timer_fd);
 	close(signal_fd);
 
