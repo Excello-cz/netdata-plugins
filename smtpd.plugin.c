@@ -161,8 +161,8 @@ process_log_data(const int fd, struct statistics * data) {
 	char buf[BUFSIZ];
 	ssize_t ret;
 
-	while ((ret = read(fd, buf, sizeof buf)) > 0) {
-		//fprintf(stderr, "D: data len %ld\n", ret);
+	while ((ret = read(fd, buf, sizeof buf - 1)) > 0) {
+		buf[ret] = '\0';
 		process_smtp(buf, data);
 	}
 }
