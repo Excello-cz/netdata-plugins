@@ -25,7 +25,7 @@ enum poll {
 
 #define LEN(x) ( sizeof x / sizeof * x )
 
-struct processor {
+struct stat_func {
 	void (*clear)        (void *);
 	void (*print)        (const void *);
 	void (*process)      (const char *, void *);
@@ -39,7 +39,7 @@ struct fs_event {
 	int watch_file;
 	int file_fd;
 	void * data;
-	struct processor * proc;
+	struct stat_func * func;
 };
 
 static
@@ -167,10 +167,10 @@ main(int argc, const char * argv[]) {
 				for (i = 0; i < vector.len; i++) {
 					struct fs_event * statistics = vector_item(&vector, i);
 
-					if (statistics->proc->postprocess)
-						statistics->proc->postprocess(statistics->data);
+					if (statistics->func->postprocess)
+						statistics->func->postprocess(statistics->data);
 
-					statistics->proc->print(statistics->data);
+					statistics->func->print(statistics->data);
 				}
 			}
 		}
