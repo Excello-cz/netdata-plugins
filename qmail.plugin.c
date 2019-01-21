@@ -9,10 +9,11 @@
 
 #include "err.h"
 #include "flush.h"
-#include "fs.h"
 #include "signal.h"
 #include "timer.h"
 #include "vector.h"
+
+#include "fs.h"
 
 #define DEFAULT_PATH "/var/log/qmail"
 
@@ -24,23 +25,6 @@ enum poll {
 };
 
 #define LEN(x) ( sizeof x / sizeof * x )
-
-struct stat_func {
-	void (*clear)        (void *);
-	void (*print)        (const void *);
-	void (*process)      (const char *, void *);
-	void (*postprocess)  (void *);
-};
-
-struct fs_event {
-	const char * dir_name;
-	/* NOTE: There is no need to save file name, it is 'current' always */
-	int watch_dir;
-	int watch_file;
-	int file_fd;
-	void * data;
-	struct stat_func * func;
-};
 
 static
 void
@@ -160,6 +144,7 @@ main(int argc, const char * argv[]) {
 			 * - it detects change in every registerd 'current' log and process appended lines
 			 */
 				fputs("fs event\n", stderr);
+				process_fs_event_queue(fs_event_fd, &vector);
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				fprintf(stderr, "time to print\n");
