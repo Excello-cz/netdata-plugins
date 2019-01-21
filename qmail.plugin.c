@@ -4,11 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "flush.h"
+#include "fs.h"
 #include "signal.h"
 #include "timer.h"
 
@@ -43,21 +43,6 @@ static
 void
 usage(const char * name) {
 	fprintf(stderr, "usage: %s <timout> [path]\n", name);
-}
-
-static
-int
-is_directory(const char * name) {
-	struct stat st;
-	int ret;
-
-	ret = stat(name, &st);
-
-	if (ret == -1) {
-		return ret;
-	}
-
-	return S_ISDIR(st.st_mode);
 }
 
 static
