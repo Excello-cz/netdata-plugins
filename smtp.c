@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "fs.h"
 #include "netdata.h"
 #include "smtp.h"
 
@@ -85,3 +86,28 @@ print_smtp_data(const struct statistics * data) {
 
 	fflush(stdout);
 }
+
+static
+void
+clear_smtp_data(struct statistics * data) {
+	int tmp = data->tcp_status;
+	memset(data, 0, sizeof * data);
+	data->tcp_status = tmp;
+}
+
+static
+void
+postprocess_data(struct statistics * data) {
+	if (data->tcp_status_count)
+		data->tcp_status = data->tcp_status_sum * 100 / data->tcp_status_count;
+}
+
+static
+struct stat_func smtp = {
+	.print = &print_smtp_data,
+	.process = &print_smtp_data,
+	.postprocess = &postprocess_data,
+	.clear = &clear_smtp_data,
+};
+
+struct stat_func * smtp_func = &smtp;

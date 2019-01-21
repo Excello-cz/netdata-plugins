@@ -9,7 +9,9 @@
 #include <unistd.h>
 
 #include "err.h"
+#include "vector.h"
 #include "flush.h"
+#include "fs.h"
 #include "netdata.h"
 #include "smtp.h"
 #include "signal.h"
@@ -167,22 +169,6 @@ process_log_data(const int fd, struct statistics * data) {
 	}
 }
 
-static
-void
-clear_data(struct statistics * data) {
-	int tmp = data->tcp_status;
-	memset(data, 0, sizeof * data);
-	data->tcp_status = tmp;
-}
-
-
-static
-void
-postprocess_data(struct statistics * data) {
-	if (data->tcp_status_count)
-		data->tcp_status = data->tcp_status_sum * 100 / data->tcp_status_count;
-}
-
 int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
@@ -257,9 +243,9 @@ main(int argc, char * argv[]) {
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				flush_read_fd(pfd[POLL_TIMER].fd);
-				postprocess_data(&data);
-				print_smtp_data(&data);
-				clear_data(&data);
+				smtp_func->postprocess(&data);
+				smtp_func->print(&data);
+				smtp_func->clear(&data);
 			}
 		} else if (nfd == 0) {
 			fputs("smtpd: D: timeout\n", stderr);
