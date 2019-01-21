@@ -17,13 +17,13 @@ all: $(BIN)
 
 ## Dependencies
 smtpd.plugin: err.o flush.o smtpd.plugin.o netdata.o signal.o timer.o
-qmail.plugin: qmail.plugin.o flush.o fs.o signal.o timer.o
+qmail.plugin: qmail.plugin.o flush.o fs.o signal.o timer.o vector.o
 
 err.o: err.c err.h
 flush.o: flush.c flush.h
 fs.o: fs.c fs.h
 netdata.o: netdata.c netdata.h
-qmail.plugin.o: flush.h fs.h signal.h timer.h
+qmail.plugin.o: flush.h fs.h signal.h timer.h vector.h
 signal.o: signal.c signal.h
 smtpd.plugin.o: err.h flush.h netdata.h timer.o
 timer.o: timer.c timer.h

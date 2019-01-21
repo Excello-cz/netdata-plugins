@@ -7,10 +7,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "err.h"
 #include "flush.h"
 #include "fs.h"
 #include "signal.h"
 #include "timer.h"
+#include "vector.h"
 
 #define DEFAULT_PATH "/var/log/qmail"
 
@@ -84,6 +86,7 @@ detect_log_dirs() {
 int
 main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
+	struct vector vector = VECTOR_EMPTY;
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
@@ -91,6 +94,7 @@ main(int argc, const char * argv[]) {
 	int signal_fd;
 	int timer_fd;
 	int run;
+	int i;
 
 	path = DEFAULT_PATH;
 	argv0 = *argv; argv++; argc--;
@@ -160,8 +164,14 @@ main(int argc, const char * argv[]) {
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				fprintf(stderr, "time to print\n");
 				flush_read_fd(timer_fd);
-				/* TODO: postprocess collected data */
-				/* TODO: print out all statistics for all registered directories */
+				for (i = 0; i < vector.len; i++) {
+					struct fs_event * statistics = vector_item(&vector, i);
+
+					if (statistics->proc->postprocess)
+						statistics->proc->postprocess(statistics->data);
+
+					statistics->proc->print(statistics->data);
+				}
 			}
 		}
 	}
