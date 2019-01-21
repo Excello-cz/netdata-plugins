@@ -26,6 +26,7 @@ qmail.plugin.o: flush.h signal.h timer.h
 signal.o: signal.c signal.h
 netdata.o: netdata.c netdata.h
 timer.o: timer.c timer.h
+vector.o: vector.c vector.h
 
 .PHONY: install
 install: all
