@@ -11,6 +11,7 @@
 #include "err.h"
 #include "flush.h"
 #include "netdata.h"
+#include "smtp.h"
 #include "signal.h"
 #include "timer.h"
 
@@ -32,19 +33,6 @@ static int wd[2];  /* Watch descriptors for inotify */
 enum event_result {
 	ND_NOTHING,
 	ND_REOPEN_LOG_FILE,
-};
-
-struct statistics {
-	int tcp_ok;
-	int tcp_deny;
-	int tcp_status;
-	int tcp_status_sum;
-	int tcp_status_count;
-
-	int tcp_end_status_0;
-	int tcp_end_status_256;
-	int tcp_end_status_25600;
-	int tcp_end_status_others;
 };
 
 static
@@ -172,44 +160,10 @@ void
 process_log_data(const int fd, struct statistics * data) {
 	char buf[BUFSIZ];
 	ssize_t ret;
-	char * ptr;
-	int val;
 
 	while ((ret = read(fd, buf, sizeof buf)) > 0) {
 		//fprintf(stderr, "D: data len %ld\n", ret);
-
-		if (strstr(buf, "tcpserver: ok")) {
-			data->tcp_ok++;
-		}
-		if (strstr(buf, "tcpserver: deny")) {
-			data->tcp_deny++;
-		}
-		if ((ptr = strstr(buf, "tcpserver: status: "))) {
-			val = strtoul(ptr + sizeof "tcpserver: status: " - 1, 0, 0);
-			data->tcp_status_sum += val;
-			data->tcp_status_count++;
-			//fprintf(stderr, "v: %d s: %d\n", val, data->tcp_status_sum);
-		}
-		if ((ptr = strstr(buf, "tcpserver: end "))) {
-			ptr = strstr(ptr, "status ");
-			if (ptr) {
-				val = strtoul(ptr + sizeof "status " - 1, 0, 0);
-				switch (val) {
-				case 0:
-					data->tcp_end_status_0++;
-					break;
-				case 256:
-					data->tcp_end_status_256++;
-					break;
-				case 25600:
-					data->tcp_end_status_25600++;
-					break;
-				default:
-					data->tcp_end_status_others++;
-					break;
-				}
-			}
-		}
+		process_smtp(buf, data);
 	}
 }
 
@@ -221,55 +175,12 @@ clear_data(struct statistics * data) {
 	data->tcp_status = tmp;
 }
 
-static
-void
-print_header() {
-	/*            type.id       name           title                units       family context chartype     */
-	nd_chart("qmail.smtpd", "smtpd qmail", "Qmail SMTPD", "# smtpd connections",
-		"smtpd", "con", ND_CHART_TYPE_AREA);
-	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-
-	nd_chart("qmail.smtpd_status", "smtpd statuses", "Qmail SMTPD Statuses",
-		"average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
-	nd_dimension("tcp_status_average", "status average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
-
-	nd_chart("qmail.smtpd_end_status", "smtpd end statuses", "Qmail SMTPD End Statuses",
-		"# smtpd end statuses", "smtpd", NULL, ND_CHART_TYPE_LINE);
-	nd_dimension("tcp_end_status_0",      "0",     ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	nd_dimension("tcp_end_status_256",    "256",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	nd_dimension("tcp_end_status_25600",  "25600", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	nd_dimension("tcp_end_status_others", "other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	fflush(stdout);
-}
 
 static
 void
 postprocess_data(struct statistics * data) {
 	if (data->tcp_status_count)
 		data->tcp_status = data->tcp_status_sum * 100 / data->tcp_status_count;
-}
-
-static
-void
-print_data(const struct statistics * data) {
-	nd_begin("qmail.smtpd");
-	nd_set("tcp_ok", data->tcp_ok);
-	nd_set("tcp_deny", -data->tcp_deny);
-	nd_end();
-
-	nd_begin("qmail.smtpd_status");
-	nd_set("tcp_status_average", data->tcp_status);
-	nd_end();
-
-	nd_begin("qmail.smtpd_end_status");
-	nd_set("tcp_end_status_0", data->tcp_end_status_0);
-	nd_set("tcp_end_status_256", data->tcp_end_status_256);
-	nd_set("tcp_end_status_25600", data->tcp_end_status_25600);
-	nd_set("tcp_end_status_others", data->tcp_end_status_others);
-	nd_end();
-
-	fflush(stdout);
 }
 
 int
@@ -327,7 +238,7 @@ main(int argc, char * argv[]) {
 
 	memset(&data, 0, sizeof data);
 	fputs("smtpd: D: Starting smptd.plugin\n", stderr);
-	print_header();
+	print_smtp_header();
 
 	for (run = 1; run ;) {
 		nfd = poll(pfd, LEN(pfd), -1);
@@ -347,7 +258,7 @@ main(int argc, char * argv[]) {
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				flush_read_fd(pfd[POLL_TIMER].fd);
 				postprocess_data(&data);
-				print_data(&data);
+				print_smtp_data(&data);
 				clear_data(&data);
 			}
 		} else if (nfd == 0) {
