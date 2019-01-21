@@ -48,6 +48,8 @@ process_fs_event(const struct inotify_event * event, struct vector * logs) {
 			fprintf(stderr, "%s/current changed\n", item->dir_name);
 		} else if (event->wd == item->watch_dir) {
 			fprintf(stderr, "%s directory changed\n", item->dir_name);
+			if (event->len)
+				fprintf(stderr, "the name of the change: %s\n", event->name);
 		}
 	}
 }
