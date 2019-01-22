@@ -5,9 +5,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "err.h"
-#include "vector.h"
-
 #include "fs.h"
 
 int
@@ -39,11 +36,11 @@ prepare_fs_event_fd() {
 
 static
 void
-process_fs_event(const struct inotify_event * event, struct vector * logs) {
+process_fs_event(const struct inotify_event * event, struct fs_event * logs, size_t len) {
 	int i;
 
-	for (i = 0; i < logs->len; i++) {
-		struct fs_event * item = vector_item(logs, i);
+	for (i = 0; i < len; i++) {
+		struct fs_event * item = logs + i;
 		if (event->wd == item->watch_file) {
 			fprintf(stderr, "%s/current changed\n", item->dir_name);
 		} else if (event->wd == item->watch_dir) {
@@ -55,7 +52,7 @@ process_fs_event(const struct inotify_event * event, struct vector * logs) {
 }
 
 void
-process_fs_event_queue(const int fd, struct vector * logs) {
+process_fs_event_queue(const int fd, struct fs_event * logs, size_t logs_len) {
 	const struct inotify_event * event;
 	char buf[BUFSIZ];
 	ssize_t len;
@@ -73,7 +70,7 @@ process_fs_event_queue(const int fd, struct vector * logs) {
 
 		for (ptr = buf; ptr < buf + len; ptr += sizeof * event + event->len) {
 			event = (const struct inotify_event *)ptr;
-			process_fs_event(event, logs);
+			process_fs_event(event, logs, logs_len);
 		}
 	}
 }

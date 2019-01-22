@@ -11,4 +11,4 @@ struct fs_event {
 int is_directory(const char *);
 
 int prepare_fs_event_fd();
-void process_fs_event_queue(const int, struct vector *);
+void process_fs_event_queue(const int, struct fs_event *, size_t);

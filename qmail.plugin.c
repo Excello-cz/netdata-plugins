@@ -145,7 +145,7 @@ main(int argc, const char * argv[]) {
 			 * - it detects change in every registerd 'current' log and process appended lines
 			 */
 				fputs("fs event\n", stderr);
-				process_fs_event_queue(fs_event_fd, &vector);
+				process_fs_event_queue(fs_event_fd, vector.data, vector.len);
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				fprintf(stderr, "time to print\n");
