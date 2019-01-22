@@ -160,7 +160,7 @@ handle_inot_events() {
 
 static
 void
-process_log_data(const int fd, struct statistics * data) {
+process_log_data(const int fd, void * data) {
 	char buf[BUFSIZ];
 	ssize_t ret;
 
@@ -174,7 +174,7 @@ int
 main(int argc, char * argv[]) {
 	const char * file_name = DEFALT_PATH;
 	enum event_result event_result;
-	struct statistics data;
+	void * data;
 	struct pollfd pfd[3];
 	const char * argv0;
 	enum nd_err ret;
@@ -223,7 +223,11 @@ main(int argc, char * argv[]) {
 	pfd[POLL_TIMER].fd = timer_fd;
 	pfd[POLL_TIMER].events = POLLIN;
 
-	memset(&data, 0, sizeof data);
+	data = smtp_func->init();
+	if (data == NULL) {
+		perror("smtp init");
+		exit(1);
+	}
 	fputs("smtpd: D: Starting smptd.plugin\n", stderr);
 	smtp_func->print_hdr();
 
@@ -237,16 +241,16 @@ main(int argc, char * argv[]) {
 			}
 			if (pfd[POLL_INOTIFY].revents & POLLIN) {
 				event_result = handle_inot_events();
-				process_log_data(log_fd, &data);
+				process_log_data(log_fd, data);
 				if (event_result == ND_REOPEN_LOG_FILE) {
 					reopen_log_file(file_name);
 				}
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				flush_read_fd(pfd[POLL_TIMER].fd);
-				smtp_func->postprocess(&data);
-				smtp_func->print(&data);
-				smtp_func->clear(&data);
+				smtp_func->postprocess(data);
+				smtp_func->print(data);
+				smtp_func->clear(data);
 			}
 		} else if (nfd == 0) {
 			fputs("smtpd: D: timeout\n", stderr);
@@ -261,6 +265,7 @@ main(int argc, char * argv[]) {
 
 	fputs("smtpd: D: Exiting\n", stderr);
 
+	smtp_func->fini(data);
 	close(ino_fd);
 	close(log_fd);
 	close(timer_fd);

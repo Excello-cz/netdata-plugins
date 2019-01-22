@@ -7,6 +7,27 @@
 
 #include "smtp.h"
 
+struct statistics {
+	int tcp_ok;
+	int tcp_deny;
+	int tcp_status;
+	int tcp_status_sum;
+	int tcp_status_count;
+
+	int tcp_end_status_0;
+	int tcp_end_status_256;
+	int tcp_end_status_25600;
+	int tcp_end_status_others;
+};
+
+static
+void *
+smtp_data_init() {
+	struct statistics * ret;
+	ret = calloc(1, sizeof * ret);
+	return ret;
+}
+
 static
 void
 process_smtp(const char * line, struct statistics * data) {
@@ -108,6 +129,8 @@ postprocess_data(struct statistics * data) {
 
 static
 struct stat_func smtp = {
+	.init = &smtp_data_init,
+	.fini = &free,
 	.print_hdr = &print_smtp_header,
 	.print = &print_smtp_data,
 	.process = &process_smtp,
