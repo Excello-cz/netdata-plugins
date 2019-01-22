@@ -19,7 +19,9 @@ enum nd_charttype {
 void nd_disable();
 
 void nd_chart(
-	const char * type_id,
+	const char * type,
+	const char * prefix,
+	const char * id,
 	const char * name,
 	const char * title,
 	const char * units,
@@ -37,7 +39,18 @@ void nd_dimension(
 	enum nd_visibility visibility
 );
 
-void nd_begin(const char *);
-void nd_begin_time(const char *, const unsigned long);
+void nd_begin(
+	const char * type,
+	const char * prefix,
+	const char * id
+);
+
+void nd_begin_time(
+	const char * type,
+	const char * prefix,
+	const char * id,
+	const unsigned long
+);
+
 void nd_set(const char *, const long);
 void nd_end();

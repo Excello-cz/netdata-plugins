@@ -26,11 +26,11 @@ check_null(const char * str) {
 }
 
 void
-nd_chart(const char * type_id, const char * name, const char * title,
-		const char * units, const char * family, const char * context,
+nd_chart(const char * type, const char * prefix, const char * id, const char * name,
+		const char * title, const char * units, const char * family, const char * context,
 		enum nd_charttype chart_type) {
-	printf("\nCHART %s '%s' '%s' '%s' '%s' '%s' %s\n", type_id, check_null(name),
-		check_null(title), check_null(units), check_null(family),
+	printf("\nCHART %s.%s_%s '%s' '%s' '%s' '%s' '%s' %s\n", type, check_null(prefix), id,
+		check_null(name), check_null(title), check_null(units), check_null(family),
 		check_null(context), nd_charttype_str[chart_type]);
 }
 
@@ -51,16 +51,16 @@ nd_dimension(const char * id, const char * name, enum nd_algorithm alg,
 }
 
 void
-nd_begin(const char * name) {
-	printf("\nBEGIN %s\n", name);
+nd_begin(const char * type, const char * prefix, const char * id) {
+	nd_begin_time(type, prefix, id, 0);
 }
 
 void
-nd_begin_time(const char * name, const unsigned long time) {
+nd_begin_time(const char * type, const char * prefix, const char * id, const unsigned long time) {
+	printf("\nBEGIN %s.%s_%s", type, check_null(prefix), id);
 	if (time)
-		printf("\nBEGIN %s %lu\n", name, time);
-	else
-		nd_begin(name);
+		printf(" %lu", time);
+	putchar('\n');
 }
 
 void
