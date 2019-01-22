@@ -70,18 +70,17 @@ process_smtp(const char * line, struct statistics * data) {
 
 static
 void
-print_smtp_header() {
-	/*            type.id       name           title                units       family context chartype     */
-	nd_chart("qmail", NULL, "smtpd", "smtpd qmail", "Qmail SMTPD", "# smtpd connections",
+print_smtp_header(const char * name) {
+	nd_chart("qmail", name, "smtpd", "smtpd qmail", "Qmail SMTPD", "# smtpd connections",
 		"smtpd", "con", ND_CHART_TYPE_AREA);
 	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
-	nd_chart("qmail", NULL, "smtpd_status", "smtpd statuses", "Qmail SMTPD Statuses",
+	nd_chart("qmail", name, "smtpd_status", "smtpd statuses", "Qmail SMTPD Statuses",
 		"average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_status_average", "status average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
 
-	nd_chart("qmail", NULL, "smtpd_end_status", "smtpd end statuses", "Qmail SMTPD End Statuses",
+	nd_chart("qmail", name, "smtpd_end_status", "smtpd end statuses", "Qmail SMTPD End Statuses",
 		"# smtpd end statuses", "smtpd", NULL, ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_end_status_0",      "0",     ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("tcp_end_status_256",    "256",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -92,17 +91,17 @@ print_smtp_header() {
 
 static
 void
-print_smtp_data(const struct statistics * data, const unsigned long time) {
-	nd_begin_time("qmail", NULL, "smtpd", time);
+print_smtp_data(const char * name, const struct statistics * data, const unsigned long time) {
+	nd_begin_time("qmail", name, "smtpd", time);
 	nd_set("tcp_ok", data->tcp_ok);
 	nd_set("tcp_deny", -data->tcp_deny);
 	nd_end();
 
-	nd_begin_time("qmail", NULL, "smtpd_status", time);
+	nd_begin_time("qmail", name, "smtpd_status", time);
 	nd_set("tcp_status_average", data->tcp_status);
 	nd_end();
 
-	nd_begin_time("qmail", NULL, "smtpd_end_status", time);
+	nd_begin_time("qmail", name, "smtpd_end_status", time);
 	nd_set("tcp_end_status_0", data->tcp_end_status_0);
 	nd_set("tcp_end_status_256", data->tcp_end_status_256);
 	nd_set("tcp_end_status_25600", data->tcp_end_status_25600);

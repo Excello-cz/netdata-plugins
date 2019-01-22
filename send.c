@@ -32,12 +32,12 @@ clear_send_statistics(struct send_statistics * data) {
 
 static
 void
-print_send_hdr() {
-	nd_chart("qmail", NULL, "send", "send qmail", "Qmail send", "# send", "send", "send", ND_CHART_TYPE_LINE);
+print_send_hdr(const char * name) {
+	nd_chart("qmail", name, "send", "send qmail", "Qmail send", "# send", "send", "send", ND_CHART_TYPE_LINE);
 	nd_dimension("start_delivery", "Start Delivery", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("end_msg", "End Msg", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
-	nd_chart("qmail", NULL, "send_delivery", "send delivery", "Qamil Send delivery", "# deliveries", "send",
+	nd_chart("qmail", name, "send_delivery", "send delivery", "Qamil Send delivery", "# deliveries", "send",
 		"send", ND_CHART_TYPE_LINE);
 	nd_dimension("delivery_success",  "Success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("delivery_failure",  "Failure", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -48,13 +48,13 @@ print_send_hdr() {
 
 static
 void
-print_send_data(const struct send_statistics * data, const unsigned long time) {
-	nd_begin_time("qmail", NULL, "send", time);
+print_send_data(const char * name, const struct send_statistics * data, const unsigned long time) {
+	nd_begin_time("qmail", name, "send", time);
 	nd_set("start_delivery", data->start_delivery);
 	nd_set("end_msg", data->end_msg);
 	nd_end();
 
-	nd_begin_time("qmail", NULL, "send_delivery", time);
+	nd_begin_time("qmail", name, "send_delivery", time);
 	nd_set("delivery_success", data->delivery_success);
 	nd_set("delivery_failure", data->delivery_failure);
 	nd_set("delivery_deferral", data->delivery_deferral);
