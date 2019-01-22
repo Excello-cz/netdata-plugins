@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "callbacks.h"
 #include "fs.h"
 
 int
@@ -36,6 +37,18 @@ prepare_fs_event_fd() {
 	return fd;
 }
 
+void
+read_log_file(struct fs_event * watch) {
+	char buf[BUFSIZ];
+	ssize_t ret;
+
+	while ((ret = read(watch->fd, buf, sizeof buf - 1)) > 0) {
+		fprintf(stderr, "D: read %ld from %s\n", ret, watch->dir_name);
+		buf[ret] = '\0';
+		watch->func->process(buf, watch->data);
+	}
+}
+
 static
 void
 reopen_log_file(struct fs_event * watch) {
@@ -61,6 +74,7 @@ process_fs_event(const struct inotify_event * event, struct fs_event * logs, siz
 			if (event->len) {
 				fprintf(stderr, "the name of the change: %s\n", event->name);
 				if (!strcmp(event->name, CURRENT_LOG_FILE_NAME)) {
+					read_log_file(item);
 					reopen_log_file(item);
 				}
 			}

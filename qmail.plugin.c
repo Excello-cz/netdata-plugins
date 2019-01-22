@@ -89,18 +89,6 @@ detect_log_dirs(const int fd, struct vector * v) {
 	closedir(dir);
 }
 
-void
-read_log_file(struct fs_event * watch) {
-	char buf[BUFSIZ];
-	ssize_t ret;
-
-	while ((ret = read(watch->fd, buf, sizeof buf - 1)) > 0) {
-		fprintf(stderr, "D: read %ld from %s\n", ret, watch->dir_name);
-		buf[ret] = '\0';
-		watch->func->process(buf, watch->data);
-	}
-}
-
 int
 main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
