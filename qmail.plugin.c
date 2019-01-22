@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/inotify.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -15,6 +16,7 @@
 #include "vector.h"
 
 #include "fs.h"
+#include "smtp.h"
 
 #define DEFAULT_PATH "/var/log/qmail"
 
@@ -35,9 +37,10 @@ usage(const char * name) {
 
 static
 void
-detect_log_dirs() {
+detect_log_dirs(const int fd, struct vector * v) {
 	struct dirent * dir_entry;
 	const char * dir_name;
+	struct fs_event watch;
 	DIR * dir;
 
 	dir = opendir(".");
@@ -54,12 +57,18 @@ detect_log_dirs() {
 
 		if (is_directory(dir_name) == 1) {
 			fprintf(stderr, "D: %s ", dir_name);
+			memset(&watch, 0, sizeof watch);
 			if (strstr(dir_name, "send")) {
 				fputs("it is send log\n", stderr);
 				/* TODO: register send notifier for this directory */
 			} else if (strstr(dir_name, "smtp")) {
 				fputs("it is smtp log\n", stderr);
 				/* TODO: register smtp notifier for this directory */
+				watch.watch_dir = inotify_add_watch(fd, dir_name, IN_CREATE);
+				watch.dir_name = strdup(dir_name);
+				watch.func = smtp_func;
+				watch.data = smtp_func->init();
+				vector_add(v, &watch);
 			} else
 				fputs("I don't know\n", stderr);
 		}
@@ -109,7 +118,7 @@ main(int argc, const char * argv[]) {
 		exit(1);
 	}
 
-	detect_log_dirs();
+	vector_init(&vector, sizeof(struct fs_event));
 
 	timer_fd = prepare_timer_fd(timeout);
 	pfd[POLL_TIMER].fd = timer_fd;
@@ -122,6 +131,13 @@ main(int argc, const char * argv[]) {
 	fs_event_fd = prepare_fs_event_fd();
 	pfd[POLL_FS_EVENT].fd = fs_event_fd;
 	pfd[POLL_FS_EVENT].events = POLLIN;
+
+	detect_log_dirs(fs_event_fd, &vector);
+
+	for (i = 0; i < vector.len; i++) {
+		struct fs_event * watch = vector_item(&vector, i);
+		watch->func->print_hdr();
+	}
 
 	for (run = 1; run;) {
 		switch (poll(pfd, LEN(pfd), -1)) {
@@ -162,6 +178,12 @@ main(int argc, const char * argv[]) {
 		}
 	}
 
+	for (i = 0; i < vector.len; i++) {
+		struct fs_event * watch = vector_item(&vector, i);
+		free((void *)watch->dir_name);
+		watch->func->fini(watch->data);
+		close(watch->fd);
+	}
 	close(fs_event_fd);
 	close(timer_fd);
 	close(signal_fd);

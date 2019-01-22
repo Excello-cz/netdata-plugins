@@ -3,7 +3,7 @@ struct fs_event {
 	/* NOTE: There is no need to save file name, it is 'current' always */
 	int watch_dir;
 	int watch_file;
-	int file_fd;
+	int fd;
 	void * data;
 	struct stat_func * func;
 };

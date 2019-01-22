@@ -29,7 +29,7 @@ void
 nd_chart(const char * type_id, const char * name, const char * title,
 		const char * units, const char * family, const char * context,
 		enum nd_charttype chart_type) {
-	printf("CHART %s '%s' '%s' '%s' '%s' '%s' %s\n", type_id, check_null(name),
+	printf("\nCHART %s '%s' '%s' '%s' '%s' '%s' %s\n", type_id, check_null(name),
 		check_null(title), check_null(units), check_null(family),
 		check_null(context), nd_charttype_str[chart_type]);
 }
@@ -52,7 +52,7 @@ nd_dimension(const char * id, const char * name, enum nd_algorithm alg,
 
 void
 nd_begin(const char * name) {
-	printf("BEGIN %s\n", name);
+	printf("\nBEGIN %s\n", name);
 }
 
 void

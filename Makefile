@@ -16,7 +16,7 @@ BIN = qmail.plugin smtpd.plugin
 all: $(BIN)
 
 ## Dependencies
-qmail.plugin: qmail.plugin.o flush.o fs.o signal.o timer.o vector.o
+qmail.plugin: qmail.plugin.o flush.o fs.o netdata.o signal.o smtp.o timer.o vector.o
 smtpd.plugin: err.o flush.o smtpd.plugin.o netdata.o smtp.o signal.o timer.o
 
 qmail.plugin.o: flush.h fs.h signal.h timer.h vector.h
