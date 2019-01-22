@@ -56,6 +56,14 @@ nd_begin(const char * name) {
 }
 
 void
+nd_begin_time(const char * name, const unsigned long time) {
+	if (time)
+		printf("\nBEGIN %s %lu\n", name, time);
+	else
+		nd_begin(name);
+}
+
+void
 nd_end() {
 	puts("END");
 }

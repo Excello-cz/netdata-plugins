@@ -38,5 +38,6 @@ void nd_dimension(
 );
 
 void nd_begin(const char *);
+void nd_begin_time(const char *, const unsigned long);
 void nd_set(const char *, const long);
 void nd_end();
