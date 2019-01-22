@@ -1,6 +1,8 @@
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -36,6 +38,17 @@ prepare_fs_event_fd() {
 
 static
 void
+reopen_log_file(struct fs_event * watch) {
+	char file_name[BUFSIZ];
+
+	fprintf(stderr, "D: reopening file log file in: %s\n", watch->dir_name);
+	sprintf(file_name, "%s/" CURRENT_LOG_FILE_NAME, watch->dir_name);
+	close(watch->fd);
+	watch->fd = open(file_name, O_RDONLY);
+}
+
+static
+void
 process_fs_event(const struct inotify_event * event, struct fs_event * logs, size_t len) {
 	int i;
 
@@ -45,8 +58,12 @@ process_fs_event(const struct inotify_event * event, struct fs_event * logs, siz
 			fprintf(stderr, "%s/current changed\n", item->dir_name);
 		} else if (event->wd == item->watch_dir) {
 			fprintf(stderr, "%s directory changed\n", item->dir_name);
-			if (event->len)
+			if (event->len) {
 				fprintf(stderr, "the name of the change: %s\n", event->name);
+				if (!strcmp(event->name, CURRENT_LOG_FILE_NAME)) {
+					reopen_log_file(item);
+				}
+			}
 		}
 	}
 }

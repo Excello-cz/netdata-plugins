@@ -1,3 +1,5 @@
+#define CURRENT_LOG_FILE_NAME "current"
+
 struct fs_event {
 	const char * dir_name;
 	/* NOTE: There is no need to save file name, it is 'current' always */
