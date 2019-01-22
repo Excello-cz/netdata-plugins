@@ -5,7 +5,7 @@ struct fs_event {
 	int watch_file;
 	int fd;
 	void * data;
-	struct stat_func * func;
+	const struct stat_func * func;
 };
 
 int is_directory(const char *);

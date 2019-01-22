@@ -39,9 +39,20 @@ usage(const char * name) {
 
 static
 void
+prepare_watcher(struct fs_event * watch, const int fd, const struct stat_func * func) {
+	char file_name[PATH_MAX];
+	sprintf(file_name, "%s/current", watch->dir_name);
+	watch->watch_dir = inotify_add_watch(fd, watch->dir_name, IN_CREATE);
+	watch->fd = open(file_name, O_RDONLY);
+	lseek(watch->fd, 0, SEEK_END);
+	watch->func = func;
+	watch->data = func->init();
+}
+
+static
+void
 detect_log_dirs(const int fd, struct vector * v) {
 	struct dirent * dir_entry;
-	char file_name[PATH_MAX];
 	const char * dir_name;
 	struct fs_event watch;
 	DIR * dir;
@@ -59,25 +70,16 @@ detect_log_dirs(const int fd, struct vector * v) {
 			continue;
 
 		if (is_directory(dir_name) == 1) {
-			sprintf(file_name, "%s/current", dir_name);
 			memset(&watch, 0, sizeof watch);
 			if (strstr(dir_name, "send")) {
 				fprintf(stderr, "send log directory detected: %s\n", dir_name);
-				watch.watch_dir = inotify_add_watch(fd, dir_name, IN_CREATE);
 				watch.dir_name = strdup(dir_name);
-				watch.fd = open(file_name, O_RDONLY);
-				lseek(watch.fd, 0, SEEK_END);
-				watch.func = send_func;
-				watch.data = send_func->init();
+				prepare_watcher(&watch, fd, send_func);
 				vector_add(v, &watch);
 			} else if (strstr(dir_name, "smtp")) {
 				fprintf(stderr, "smtp log directory detected: %s\n", dir_name);
-				watch.watch_dir = inotify_add_watch(fd, dir_name, IN_CREATE);
 				watch.dir_name = strdup(dir_name);
-				watch.fd = open(file_name, O_RDONLY);
-				lseek(watch.fd, 0, SEEK_END);
-				watch.func = smtp_func;
-				watch.data = smtp_func->init();
+				prepare_watcher(&watch, fd, smtp_func);
 				vector_add(v, &watch);
 			} else
 				fputs("I don't know\n", stderr);
