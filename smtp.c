@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fs.h"
+#include "callbacks.h"
 #include "netdata.h"
+
 #include "smtp.h"
 
 static

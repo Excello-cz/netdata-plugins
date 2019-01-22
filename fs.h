@@ -1,11 +1,3 @@
-struct stat_func {
-	void (*print_hdr)    ();
-	void (*clear)        (void *);
-	void (*print)        (const void *);
-	void (*process)      (const char *, void *);
-	void (*postprocess)  (void *);
-};
-
 struct fs_event {
 	const char * dir_name;
 	/* NOTE: There is no need to save file name, it is 'current' always */

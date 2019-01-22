@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "callbacks.h"
 #include "err.h"
 #include "flush.h"
 #include "signal.h"

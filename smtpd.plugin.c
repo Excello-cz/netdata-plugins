@@ -8,6 +8,7 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
+#include "callbacks.h"
 #include "err.h"
 #include "vector.h"
 #include "flush.h"
