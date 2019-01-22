@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "callbacks.h"
@@ -149,6 +150,7 @@ main(int argc, const char * argv[]) {
 	for (i = 0; i < vector.len; i++) {
 		struct fs_event * watch = vector_item(&vector, i);
 		watch->func->print_hdr();
+		clock_gettime(CLOCK_REALTIME, &watch->time);
 	}
 
 	for (run = 1; run;) {
@@ -186,7 +188,8 @@ main(int argc, const char * argv[]) {
 					if (statistics->func->postprocess)
 						statistics->func->postprocess(statistics->data);
 
-					statistics->func->print(statistics->data);
+					update_timestamps(statistics);
+					statistics->func->print(statistics->data, statistics->last_update);
 					statistics->func->clear(statistics->data);
 				}
 			}

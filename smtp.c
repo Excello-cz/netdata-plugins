@@ -92,17 +92,17 @@ print_smtp_header() {
 
 static
 void
-print_smtp_data(const struct statistics * data) {
-	nd_begin("qmail.smtpd");
+print_smtp_data(const struct statistics * data, const unsigned long time) {
+	nd_begin_time("qmail.smtpd", time);
 	nd_set("tcp_ok", data->tcp_ok);
 	nd_set("tcp_deny", -data->tcp_deny);
 	nd_end();
 
-	nd_begin("qmail.smtpd_status");
+	nd_begin_time("qmail.smtpd_status", time);
 	nd_set("tcp_status_average", data->tcp_status);
 	nd_end();
 
-	nd_begin("qmail.smtpd_end_status");
+	nd_begin_time("qmail.smtpd_end_status", time);
 	nd_set("tcp_end_status_0", data->tcp_end_status_0);
 	nd_set("tcp_end_status_256", data->tcp_end_status_256);
 	nd_set("tcp_end_status_25600", data->tcp_end_status_25600);

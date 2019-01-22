@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "callbacks.h"
@@ -38,6 +39,24 @@ prepare_fs_event_fd() {
 }
 
 void
+update_timestamps(struct fs_event * watch) {
+	struct timespec old, temp;
+
+	old.tv_sec = watch->time.tv_sec;
+	old.tv_nsec = watch->time.tv_nsec;
+	clock_gettime(CLOCK_REALTIME, &watch->time);
+
+	if ((watch->time.tv_nsec - old.tv_nsec) < 0) {
+			  temp.tv_sec = watch->time.tv_sec - old.tv_sec - 1;
+			  temp.tv_nsec = 1000000000 + watch->time.tv_nsec - old.tv_nsec;
+	} else {
+			  temp.tv_sec = watch->time.tv_sec - old.tv_sec;
+			  temp.tv_nsec = watch->time.tv_nsec - old.tv_nsec;
+	}
+	watch->last_update = temp.tv_sec * 1000000 + temp.tv_nsec / 1000;
+}
+
+void
 read_log_file(struct fs_event * watch) {
 	char buf[BUFSIZ];
 	ssize_t ret;
@@ -45,17 +64,17 @@ read_log_file(struct fs_event * watch) {
 	char * end;
 
 	while ((ret = read(watch->fd, buf, sizeof buf)) > 0) {
-		fprintf(stderr, "D: read %ld from %s\n", ret, watch->dir_name);
+		//fprintf(stderr, "D: read %ld from %s\n", ret, watch->dir_name);
 		pos = buf;
 		for (;;) {
 			end = memchr(pos, '\n', ret - (pos - buf));
 			if (end) {
 				*end = '\0';
-				fprintf(stderr, "D: line %ld %ld\n", strlen(pos), end - pos);
+				//fprintf(stderr, "D: line %ld %ld\n", strlen(pos), end - pos);
 				watch->func->process(pos, watch->data);
 				pos = end + 1;
 			} else {
-				fputs("Could not locate eol\n", stderr);
+				//fputs("Could not locate eol\n", stderr);
 				break;
 			}
 		}

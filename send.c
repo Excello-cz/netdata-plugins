@@ -48,13 +48,13 @@ print_send_hdr() {
 
 static
 void
-print_send_data(const struct send_statistics * data) {
-	nd_begin("qmail.send");
+print_send_data(const struct send_statistics * data, const unsigned long time) {
+	nd_begin_time("qmail.send", time);
 	nd_set("start_delivery", data->start_delivery);
 	nd_set("end_msg", data->end_msg);
 	nd_end();
 
-	nd_begin("qmail.send_delivery");
+	nd_begin_time("qmail.send_delivery", time);
 	nd_set("delivery_success", data->delivery_success);
 	nd_set("delivery_failure", data->delivery_failure);
 	nd_set("delivery_deferral", data->delivery_deferral);

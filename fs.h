@@ -6,11 +6,15 @@ struct fs_event {
 	int watch_dir;
 	int watch_file;
 	int fd;
+	struct timespec time;
+	long last_update;
 	void * data;
 	const struct stat_func * func;
 };
 
 int is_directory(const char *);
+
+void update_timestamps(struct fs_event *);
 
 void read_log_file(struct fs_event *);
 int prepare_fs_event_fd();
