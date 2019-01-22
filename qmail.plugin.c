@@ -17,6 +17,7 @@
 #include "vector.h"
 
 #include "fs.h"
+#include "send.h"
 #include "smtp.h"
 
 #define DEFAULT_PATH "/var/log/qmail"
@@ -62,7 +63,13 @@ detect_log_dirs(const int fd, struct vector * v) {
 			memset(&watch, 0, sizeof watch);
 			if (strstr(dir_name, "send")) {
 				fprintf(stderr, "send log directory detected: %s\n", dir_name);
-				/* TODO: register send notifier for this directory */
+				watch.watch_dir = inotify_add_watch(fd, dir_name, IN_CREATE);
+				watch.dir_name = strdup(dir_name);
+				watch.fd = open(file_name, O_RDONLY);
+				lseek(watch.fd, 0, SEEK_END);
+				watch.func = send_func;
+				watch.data = send_func->init();
+				vector_add(v, &watch);
 			} else if (strstr(dir_name, "smtp")) {
 				fprintf(stderr, "smtp log directory detected: %s\n", dir_name);
 				watch.watch_dir = inotify_add_watch(fd, dir_name, IN_CREATE);
