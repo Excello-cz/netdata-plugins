@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <poll.h>
 #include <stdio.h>
@@ -39,6 +40,7 @@ static
 void
 detect_log_dirs(const int fd, struct vector * v) {
 	struct dirent * dir_entry;
+	char file_name[PATH_MAX];
 	const char * dir_name;
 	struct fs_event watch;
 	DIR * dir;
@@ -56,16 +58,17 @@ detect_log_dirs(const int fd, struct vector * v) {
 			continue;
 
 		if (is_directory(dir_name) == 1) {
-			fprintf(stderr, "D: %s ", dir_name);
+			sprintf(file_name, "%s/current", dir_name);
 			memset(&watch, 0, sizeof watch);
 			if (strstr(dir_name, "send")) {
-				fputs("it is send log\n", stderr);
+				fprintf(stderr, "send log directory detected: %s\n", dir_name);
 				/* TODO: register send notifier for this directory */
 			} else if (strstr(dir_name, "smtp")) {
-				fputs("it is smtp log\n", stderr);
-				/* TODO: register smtp notifier for this directory */
+				fprintf(stderr, "smtp log directory detected: %s\n", dir_name);
 				watch.watch_dir = inotify_add_watch(fd, dir_name, IN_CREATE);
 				watch.dir_name = strdup(dir_name);
+				watch.fd = open(file_name, O_RDONLY);
+				lseek(watch.fd, 0, SEEK_END);
 				watch.func = smtp_func;
 				watch.data = smtp_func->init();
 				vector_add(v, &watch);
@@ -75,6 +78,18 @@ detect_log_dirs(const int fd, struct vector * v) {
 	}
 
 	closedir(dir);
+}
+
+void
+read_log_file(struct fs_event * watch) {
+	char buf[BUFSIZ];
+	ssize_t ret;
+
+	while ((ret = read(watch->fd, buf, sizeof buf - 1)) > 0) {
+		fprintf(stderr, "D: read %ld from %s\n", ret, watch->dir_name);
+		buf[ret] = '\0';
+		watch->func->process(buf, watch->data);
+	}
 }
 
 int
@@ -164,15 +179,18 @@ main(int argc, const char * argv[]) {
 				process_fs_event_queue(fs_event_fd, vector.data, vector.len);
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
-				fprintf(stderr, "time to print\n");
+				fputs("D: time to print\n", stderr);
 				flush_read_fd(timer_fd);
 				for (i = 0; i < vector.len; i++) {
 					struct fs_event * statistics = vector_item(&vector, i);
+
+					read_log_file(statistics);
 
 					if (statistics->func->postprocess)
 						statistics->func->postprocess(statistics->data);
 
 					statistics->func->print(statistics->data);
+					statistics->func->clear(statistics->data);
 				}
 			}
 		}
