@@ -41,11 +41,24 @@ void
 read_log_file(struct fs_event * watch) {
 	char buf[BUFSIZ];
 	ssize_t ret;
+	char * pos;
+	char * end;
 
-	while ((ret = read(watch->fd, buf, sizeof buf - 1)) > 0) {
+	while ((ret = read(watch->fd, buf, sizeof buf)) > 0) {
 		fprintf(stderr, "D: read %ld from %s\n", ret, watch->dir_name);
-		buf[ret] = '\0';
-		watch->func->process(buf, watch->data);
+		pos = buf;
+		for (;;) {
+			end = memchr(pos, '\n', ret - (pos - buf));
+			if (end) {
+				*end = '\0';
+				fprintf(stderr, "D: line %ld %ld\n", strlen(pos), end - pos);
+				watch->func->process(pos, watch->data);
+				pos = end + 1;
+			} else {
+				fputs("Could not locate eol\n", stderr);
+				break;
+			}
+		}
 	}
 }
 
