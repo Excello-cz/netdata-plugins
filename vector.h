@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
 struct vector {
 	size_t cap;  /* vector capapcity */
 	size_t size; /* size of one item */

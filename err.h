@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
 enum nd_err {
 	ND_SUCCESS,
 	ND_ERROR,

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
 enum nd_visibility {
 	ND_VISIBLE = 0,
 	ND_HIDDEN,
