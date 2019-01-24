@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
 #include <dirent.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
