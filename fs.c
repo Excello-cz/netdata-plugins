@@ -83,9 +83,7 @@ process_fs_event(const struct inotify_event * event, struct fs_event * logs, siz
 
 	for (i = 0; i < len; i++) {
 		struct fs_event * item = logs + i;
-		if (event->wd == item->watch_file) {
-			fprintf(stderr, "%s/current changed\n", item->dir_name);
-		} else if (event->wd == item->watch_dir) {
+		if (event->wd == item->watch_dir) {
 			fprintf(stderr, "%s directory changed\n", item->dir_name);
 			if (event->len) {
 				fprintf(stderr, "the name of the change: %s\n", event->name);

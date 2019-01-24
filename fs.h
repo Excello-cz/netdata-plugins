@@ -6,7 +6,6 @@ struct fs_event {
 	const char * dir_name;
 	/* NOTE: There is no need to save file name, it is 'current' always */
 	int watch_dir;
-	int watch_file;
 	int fd;
 	struct timespec time;
 	void * data;
