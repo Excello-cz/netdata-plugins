@@ -41,24 +41,6 @@ prepare_fs_event_fd() {
 }
 
 void
-update_timestamps(struct fs_event * watch) {
-	struct timespec old, temp;
-
-	old.tv_sec = watch->time.tv_sec;
-	old.tv_nsec = watch->time.tv_nsec;
-	clock_gettime(CLOCK_REALTIME, &watch->time);
-
-	if ((watch->time.tv_nsec - old.tv_nsec) < 0) {
-			  temp.tv_sec = watch->time.tv_sec - old.tv_sec - 1;
-			  temp.tv_nsec = 1000000000 + watch->time.tv_nsec - old.tv_nsec;
-	} else {
-			  temp.tv_sec = watch->time.tv_sec - old.tv_sec;
-			  temp.tv_nsec = watch->time.tv_nsec - old.tv_nsec;
-	}
-	watch->last_update = temp.tv_sec * 1000000 + temp.tv_nsec / 1000;
-}
-
-void
 read_log_file(struct fs_event * watch) {
 	char buf[BUFSIZ];
 	ssize_t ret;

@@ -104,6 +104,7 @@ int
 main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
 	struct vector vector = VECTOR_EMPTY;
+	unsigned long last_update;
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
@@ -198,8 +199,8 @@ main(int argc, const char * argv[]) {
 					if (statistics->func->postprocess)
 						statistics->func->postprocess(statistics->data);
 
-					update_timestamps(statistics);
-					statistics->func->print(statistics->dir_name, statistics->data, statistics->last_update);
+					last_update = update_timestamp(&statistics->time);
+					statistics->func->print(statistics->dir_name, statistics->data, last_update);
 					statistics->func->clear(statistics->data);
 				}
 			}

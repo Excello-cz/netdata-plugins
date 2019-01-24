@@ -32,3 +32,26 @@ prepare_timer_fd(const int timeout) {
 
 	return fd;
 }
+
+unsigned long
+update_timestamp(struct timespec * now) {
+	struct timespec old, tmp;
+	unsigned long ret;
+
+	old.tv_sec  = now->tv_sec;
+	old.tv_nsec = now->tv_nsec;
+
+	clock_gettime(CLOCK_REALTIME, now);
+
+	tmp.tv_sec  = now->tv_sec  - old.tv_sec;
+	tmp.tv_nsec = now->tv_nsec - old.tv_nsec;
+
+	if (tmp.tv_nsec < 0) {
+		tmp.tv_sec  -= 1;
+		tmp.tv_nsec += 1000000000;
+	}
+
+	ret = tmp.tv_sec * 1000000 + tmp.tv_nsec / 1000;
+
+	return ret;
+}
