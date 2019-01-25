@@ -72,12 +72,9 @@ process_send_log_line(const char * line, struct send_statistics * data) {
 
 	if (strstr(line, "starting delivery")) {
 		data->start_delivery++;
-	}
-	if (strstr(line, "end msg")) {
+	} else if (strstr(line, "end msg")) {
 		data->end_msg++;
-	}
-
-	if ((ptr = strstr(line, "delivery "))) {
+	} else if ((ptr = strstr(line, "delivery "))) {
 		if (strstr(ptr, "success:")) {
 			data->delivery_success++;
 		} else if (strstr(ptr, "failure:")) {
