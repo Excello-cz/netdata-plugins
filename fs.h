@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
-#define CURRENT_LOG_FILE_NAME "current"
+#define LOG_FILE_NAME "current"
 
 struct fs_event {
 	const char * dir_name;

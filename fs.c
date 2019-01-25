@@ -96,7 +96,7 @@ void
 reopen_log_file(struct fs_event * watch) {
 	char file_name[BUFSIZ];
 
-	sprintf(file_name, "%s/" CURRENT_LOG_FILE_NAME, watch->dir_name);
+	sprintf(file_name, "%s/" LOG_FILE_NAME, watch->dir_name);
 	close(watch->fd);
 	watch->fd = open(file_name, O_RDONLY);
 }
@@ -110,7 +110,7 @@ process_fs_event(const struct inotify_event * event, struct fs_event * logs, siz
 		struct fs_event * item = logs + i;
 		if (event->wd == item->watch_dir) {
 			if (event->len) {
-				if (!strcmp(event->name, CURRENT_LOG_FILE_NAME)) {
+				if (!strcmp(event->name, LOG_FILE_NAME)) {
 					read_log_file(item);
 					reopen_log_file(item);
 				}
