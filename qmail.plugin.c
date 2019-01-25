@@ -102,8 +102,7 @@ detect_log_dirs(const int fd, struct vector * v) {
 				if (prepare_watcher(&watch, fd, smtp_func) == ND_SUCCESS)
 					vector_add(v, &watch);
 
-			} else
-				fputs("I don't know\n", stderr);
+			}
 		}
 	}
 
