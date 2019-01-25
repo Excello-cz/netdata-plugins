@@ -35,9 +35,9 @@ clear_send_statistics(struct send_statistics * data) {
 static
 void
 print_send_hdr(const char * name) {
-	nd_chart("qmail", name, "send", "send qmail", "Qmail send", "# send", "send", "send", ND_CHART_TYPE_LINE);
+	nd_chart("qmail", name, "send", "send qmail", "Qmail send", "# send", "send", "send", ND_CHART_TYPE_AREA);
 	nd_dimension("start_delivery", "Start Delivery", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	nd_dimension("end_msg", "End Msg", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("end_msg", "End Msg", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
 
 	nd_chart("qmail", name, "send_delivery", "send delivery", "Qamil Send delivery", "# deliveries", "send",
 		"send", ND_CHART_TYPE_LINE);
