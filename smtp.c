@@ -38,17 +38,13 @@ process_smtp(const char * line, struct statistics * data) {
 
 	if (strstr(line, "tcpserver: ok")) {
 		data->tcp_ok++;
-	}
-	if (strstr(line, "tcpserver: deny")) {
+	} else if (strstr(line, "tcpserver: deny")) {
 		data->tcp_deny++;
-	}
-	if ((ptr = strstr(line, "tcpserver: status: "))) {
+	} else if ((ptr = strstr(line, "tcpserver: status: "))) {
 		val = strtoul(ptr + sizeof "tcpserver: status: " - 1, 0, 0);
 		data->tcp_status_sum += val;
 		data->tcp_status_count++;
-		//fprintf(stderr, "v: %d s: %d\n", val, data->tcp_status_sum);
-	}
-	if ((ptr = strstr(line, "tcpserver: end "))) {
+	} else if ((ptr = strstr(line, "tcpserver: end "))) {
 		ptr = strstr(ptr, "status ");
 		if (ptr) {
 			val = strtoul(ptr + sizeof "status " - 1, 0, 0);
