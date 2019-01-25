@@ -180,17 +180,9 @@ main(int argc, const char * argv[]) {
 				continue;
 			}
 			if (pfd[POLL_FS_EVENT].revents & POLLIN) {
-			/* TODO: dir event notifier:
-			 *
-			 * - it detects new directories in DEFAULT_PATH
-			 * - it detects 'current' log rotations and reopes and reregister it again
-			 * - it detects change in every registerd 'current' log and process appended lines
-			 */
-				fputs("fs event\n", stderr);
 				process_fs_event_queue(fs_event_fd, vector.data, vector.len);
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
-				fputs("D: time to print\n", stderr);
 				flush_read_fd(timer_fd);
 				for (i = 0; i < vector.len; i++) {
 					struct fs_event * statistics = vector_item(&vector, i);
