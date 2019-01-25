@@ -75,8 +75,8 @@ void
 print_smtp_header(const char * name) {
 	nd_chart("qmail", name, "smtpd", "smtpd qmail", "Qmail SMTPD", "# smtpd connections",
 		"smtpd", "con", ND_CHART_TYPE_AREA);
-	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE,  1, 1, ND_VISIBLE);
+	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
 
 	nd_chart("qmail", name, "smtpd_status", "smtpd statuses", "Qmail SMTPD Statuses",
 		"average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
@@ -96,7 +96,7 @@ void
 print_smtp_data(const char * name, const struct statistics * data, const unsigned long time) {
 	nd_begin_time("qmail", name, "smtpd", time);
 	nd_set("tcp_ok", data->tcp_ok);
-	nd_set("tcp_deny", -data->tcp_deny);
+	nd_set("tcp_deny", data->tcp_deny);
 	nd_end();
 
 	nd_begin_time("qmail", name, "smtpd_status", time);
