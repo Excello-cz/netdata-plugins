@@ -2,9 +2,8 @@
 
 #define LOG_FILE_NAME "current"
 
-struct fs_event {
+struct fs_watch {
 	const char * dir_name;
-	/* NOTE: There is no need to save file name, it is 'current' always */
 	int watch_dir;
 	int fd;
 	struct timespec time;
@@ -14,6 +13,6 @@ struct fs_event {
 
 int is_directory(const char *);
 
-void read_log_file(struct fs_event *);
+void read_log_file(struct fs_watch *);
 int prepare_fs_event_fd();
-void process_fs_event_queue(const int, struct fs_event *, size_t);
+void process_fs_event_queue(const int, struct fs_watch *, size_t);

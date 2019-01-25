@@ -41,7 +41,7 @@ prepare_fs_event_fd() {
 }
 
 void
-read_log_file(struct fs_event * watch) {
+read_log_file(struct fs_watch * watch) {
 	ssize_t  max_line_length;
 	const char * line;
 	char buf[BUFSIZ];
@@ -93,7 +93,7 @@ read_log_file(struct fs_event * watch) {
 
 static
 void
-reopen_log_file(struct fs_event * watch) {
+reopen_log_file(struct fs_watch * watch) {
 	char file_name[BUFSIZ];
 
 	sprintf(file_name, "%s/" LOG_FILE_NAME, watch->dir_name);
@@ -103,11 +103,12 @@ reopen_log_file(struct fs_event * watch) {
 
 static
 void
-process_fs_event(const struct inotify_event * event, struct fs_event * logs, size_t len) {
+process_fs_event(const struct inotify_event * event, struct fs_watch * watchers, size_t watchers_length) {
+	struct fs_watch * item;
 	int i;
 
-	for (i = 0; i < len; i++) {
-		struct fs_event * item = logs + i;
+	for (i = 0; i < watchers_length; i++) {
+		item = watchers + i;
 		if (event->wd == item->watch_dir) {
 			if (event->len) {
 				if (!strcmp(event->name, LOG_FILE_NAME)) {
@@ -120,7 +121,7 @@ process_fs_event(const struct inotify_event * event, struct fs_event * logs, siz
 }
 
 void
-process_fs_event_queue(const int fd, struct fs_event * logs, size_t logs_len) {
+process_fs_event_queue(const int fd, struct fs_watch * watchers, size_t watchers_length) {
 	const struct inotify_event * event;
 	char buf[BUFSIZ];
 	ssize_t len;
@@ -138,7 +139,7 @@ process_fs_event_queue(const int fd, struct fs_event * logs, size_t logs_len) {
 
 		for (ptr = buf; ptr < buf + len; ptr += sizeof * event + event->len) {
 			event = (const struct inotify_event *)ptr;
-			process_fs_event(event, logs, logs_len);
+			process_fs_event(event, watchers, watchers_length);
 		}
 	}
 }

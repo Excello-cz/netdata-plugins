@@ -43,7 +43,7 @@ usage(const char * name) {
 
 static
 void
-prepare_watcher(struct fs_event * watch, const int fd, const struct stat_func * func) {
+prepare_watcher(struct fs_watch * watch, const int fd, const struct stat_func * func) {
 	char file_name[PATH_MAX];
 	sprintf(file_name, "%s/current", watch->dir_name);
 	watch->watch_dir = inotify_add_watch(fd, watch->dir_name, IN_CREATE);
@@ -66,7 +66,7 @@ void
 detect_log_dirs(const int fd, struct vector * v) {
 	struct dirent * dir_entry;
 	const char * dir_name;
-	struct fs_event watch;
+	struct fs_watch watch;
 	DIR * dir;
 
 	dir = opendir(".");
@@ -106,6 +106,7 @@ main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
 	struct vector vector = VECTOR_EMPTY;
 	unsigned long last_update;
+	struct fs_watch * watch;
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
@@ -143,7 +144,7 @@ main(int argc, const char * argv[]) {
 		exit(1);
 	}
 
-	vector_init(&vector, sizeof(struct fs_event));
+	vector_init(&vector, sizeof * watch);
 
 	timer_fd = prepare_timer_fd(timeout);
 	pfd[POLL_TIMER].fd = timer_fd;
@@ -160,7 +161,7 @@ main(int argc, const char * argv[]) {
 	detect_log_dirs(fs_event_fd, &vector);
 
 	for (i = 0; i < vector.len; i++) {
-		struct fs_event * watch = vector_item(&vector, i);
+		watch = vector_item(&vector, i);
 		watch->func->print_hdr(watch->dir_name);
 		clock_gettime(CLOCK_REALTIME, &watch->time);
 	}
@@ -185,23 +186,23 @@ main(int argc, const char * argv[]) {
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				flush_read_fd(timer_fd);
 				for (i = 0; i < vector.len; i++) {
-					struct fs_event * statistics = vector_item(&vector, i);
+					watch = vector_item(&vector, i);
 
-					read_log_file(statistics);
+					read_log_file(watch);
 
-					if (statistics->func->postprocess)
-						statistics->func->postprocess(statistics->data);
+					if (watch->func->postprocess)
+						watch->func->postprocess(watch->data);
 
-					last_update = update_timestamp(&statistics->time);
-					statistics->func->print(statistics->dir_name, statistics->data, last_update);
-					statistics->func->clear(statistics->data);
+					last_update = update_timestamp(&watch->time);
+					watch->func->print(watch->dir_name, watch->data, last_update);
+					watch->func->clear(watch->data);
 				}
 			}
 		}
 	}
 
 	for (i = 0; i < vector.len; i++) {
-		struct fs_event * watch = vector_item(&vector, i);
+		watch = vector_item(&vector, i);
 		free((void *)watch->dir_name);
 		watch->func->fini(watch->data);
 		close(watch->fd);
