@@ -42,23 +42,49 @@ prepare_fs_event_fd() {
 
 void
 read_log_file(struct fs_event * watch) {
+	ssize_t  max_line_length;
+	const char * line;
 	char buf[BUFSIZ];
+	ssize_t buffered;
 	ssize_t ret;
-	char * pos;
 	char * end;
 
-	while ((ret = read(watch->fd, buf, sizeof buf)) > 0) {
-		//fprintf(stderr, "D: read %ld from %s\n", ret, watch->dir_name);
-		pos = buf;
+	enum skip {
+		DO_NOT_SKIP,
+		SKIP_THE_REST
+	} skip;
+
+	buffered = 0;
+	skip = DO_NOT_SKIP;
+
+	while ((ret = read(watch->fd, buf + buffered, sizeof buf - buffered)) > 0) {
+		line = buf;
+		ret += buffered;
+		buffered = 0;
 		for (;;) {
-			end = memchr(pos, '\n', ret - (pos - buf));
+			max_line_length = ret - (line - buf);
+			end = memchr(line, '\n', max_line_length);
 			if (end) {
 				*end = '\0';
-				//fprintf(stderr, "D: line %ld %ld\n", strlen(pos), end - pos);
-				watch->func->process(pos, watch->data);
-				pos = end + 1;
+
+				if (skip == DO_NOT_SKIP)
+					watch->func->process(line, watch->data);
+				else
+					skip = DO_NOT_SKIP;
+
+				line = end + 1;
 			} else {
-				//fputs("Could not locate eol\n", stderr);
+				if (max_line_length > 0 && max_line_length < BUFSIZ) {
+					buffered = max_line_length;
+					memmove(buf, line, buffered);
+				} else if (max_line_length == BUFSIZ) {
+					buf[BUFSIZ - 1] = '\0';
+
+					if (skip == DO_NOT_SKIP)
+						watch->func->process(line, watch->data);
+
+					skip = SKIP_THE_REST;
+				}
 				break;
 			}
 		}
