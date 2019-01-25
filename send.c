@@ -35,12 +35,16 @@ clear_send_statistics(struct send_statistics * data) {
 static
 void
 print_send_hdr(const char * name) {
-	nd_chart("qmail", name, "", "send qmail", "Qmail send", "# send", "send", "send", ND_CHART_TYPE_AREA);
-	nd_dimension("start_delivery", "Start Delivery", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	char title[BUFSIZ];
+
+	sprintf(title, "Qmail Send for %s", name);
+	nd_chart("qmail", name, "", "send qmail", title, "# send", NULL, "send", ND_CHART_TYPE_AREA);
+	nd_dimension("start_delivery", "Start/End Delivery", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("end_msg", "End Msg", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
 
-	nd_chart("qmail", name, "delivery", "send delivery", "Qamil Send delivery", "# deliveries", "send",
-		"send", ND_CHART_TYPE_LINE);
+	sprintf(title, "Qmail Send delivery status for %s", name);
+	nd_chart("qmail", name, "delivery", "send delivery", title,
+		"# deliveries", NULL, "send_delivery", ND_CHART_TYPE_LINE);
 	nd_dimension("delivery_success",  "Success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("delivery_failure",  "Failure", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("delivery_deferral", "Deferral", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
