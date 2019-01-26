@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "callbacks.h"
+#include "err.h"
 #include "fs.h"
 
 int
@@ -40,7 +41,7 @@ prepare_fs_event_fd() {
 	return fd;
 }
 
-void
+enum nd_err
 read_log_file(struct fs_watch * watch) {
 	ssize_t  max_line_length;
 	const char * line;
@@ -53,6 +54,9 @@ read_log_file(struct fs_watch * watch) {
 		DO_NOT_SKIP,
 		SKIP_THE_REST
 	} skip;
+
+	if (watch->fd == -1)
+		return ND_FILE;
 
 	buffered = 0;
 	skip = DO_NOT_SKIP;
@@ -89,6 +93,8 @@ read_log_file(struct fs_watch * watch) {
 			}
 		}
 	}
+
+	return ND_SUCCESS;
 }
 
 static

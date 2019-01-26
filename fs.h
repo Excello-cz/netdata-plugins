@@ -13,6 +13,6 @@ struct fs_watch {
 
 int is_directory(const char *);
 
-void read_log_file(struct fs_watch *);
+enum nd_err read_log_file(struct fs_watch *);
 int prepare_fs_event_fd();
 void process_fs_event_queue(const int, struct fs_watch *, size_t);
