@@ -15,4 +15,4 @@ It skips all directories starting with `.` character.
 1. number of `start delivery` and `end msg`,
 2. number of delivery `success`, `failure` or `deferral`.
 
-This plugin is currently linux specific.
+This plugin is currently Linux specific.
