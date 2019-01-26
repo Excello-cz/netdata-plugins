@@ -52,10 +52,6 @@ prepare_watcher(struct fs_watch * watch, const int fd, const struct stat_func * 
 		return ND_INOTIFY;
 	}
 	watch->fd = open(file_name, O_RDONLY);
-	if (watch->fd == -1) {
-		perror("open");
-		return ND_FILE;
-	}
 	lseek(watch->fd, 0, SEEK_END);
 	watch->func = func;
 	watch->data = func->init();
