@@ -16,3 +16,9 @@ It skips all directories starting with `.` character.
 2. number of delivery `success`, `failure` or `deferral`.
 
 This plugin is currently Linux specific.
+
+### Plugin restart
+
+It is possible to restart service by sending signal `QUIT`, `TERM` or `INT` (with command `pkill qmail.plugin` for example) and `qmail.plugin` quits successfully
+It will be started by `netdata` again.
+This may be wanted if the plugin have been updated or new log directory have been introduced.
