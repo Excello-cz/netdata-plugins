@@ -69,16 +69,21 @@ process_smtp(const char * line, struct statistics * data) {
 static
 void
 print_smtp_header(const char * name) {
-	nd_chart("qmail", name, "", "smtpd qmail", "Qmail SMTPD", "# smtpd connections",
+	char title[BUFSIZ];
+
+	sprintf(title, "Qmail SMTPD for %s", name);
+	nd_chart("qmail", name, "", "smtpd qmail", title, "# smtpd connections",
 		"smtpd", "con", ND_CHART_TYPE_AREA);
 	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE,  1, 1, ND_VISIBLE);
 	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
 
-	nd_chart("qmail", name, "status", "smtpd statuses", "Qmail SMTPD Statuses",
+	sprintf(title, "Qmail SMTPD Statuses for %s", name);
+	nd_chart("qmail", name, "status", "smtpd statuses", title,
 		"average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_status_average", "status average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
 
-	nd_chart("qmail", name, "end_status", "smtpd end statuses", "Qmail SMTPD End Statuses",
+	sprintf(title, "Qmail SMTPD End Statuses for %s", name);
+	nd_chart("qmail", name, "end_status", "smtpd end statuses", title,
 		"# smtpd end statuses", "smtpd", NULL, ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_end_status_0",      "0",     ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("tcp_end_status_256",    "256",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
