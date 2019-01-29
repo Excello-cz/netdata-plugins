@@ -77,10 +77,10 @@ print_smtp_header(const char * name) {
 	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE,  1, 1, ND_VISIBLE);
 	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
 
-	sprintf(title, "Qmail SMTPD Statuses for %s", name);
+	sprintf(title, "Qmail SMTPD Open Sessions for %s", name);
 	nd_chart("qmail", name, "status", "smtpd statuses", title,
 		"average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
-	nd_dimension("tcp_status_average", "status average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
+	nd_dimension("tcp_status_average", "session average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
 
 	sprintf(title, "Qmail SMTPD End Statuses for %s", name);
 	nd_chart("qmail", name, "end_status", "smtpd end statuses", title,
