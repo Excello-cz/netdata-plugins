@@ -1,3 +1,4 @@
 *.o
 
 qmail.plugin
+scanner.plugin

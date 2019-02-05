@@ -12,15 +12,21 @@ CFLAGS += -Werror=implicit-function-declaration
 
 CPPFLAGS += -D_GNU_SOURCE
 
-BIN = qmail.plugin
+BIN = \
+	qmail.plugin \
+	scanner.plugin
+
+SHARED_OBJ = flush.o fs.o netdata.o signal.o timer.o vector.o
 
 .PHONY: all
 all: $(BIN)
 
 ## Dependencies
-qmail.plugin: qmail.plugin.o flush.o fs.o netdata.o send.o signal.o smtp.o timer.o vector.o
+qmail.plugin: qmail.plugin.o $(SHARED_OBJ) send.o smtp.o
+scanner.plugin: scanner.plugin.o $(SHARED_OBJ) scanner.o
 
 qmail.plugin.o: flush.h fs.h send.h signal.h timer.h vector.h
+scanner.plugin.o: flush.h
 
 err.o: err.c err.h
 flush.o: flush.c flush.h
