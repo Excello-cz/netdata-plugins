@@ -3,7 +3,7 @@
 PREFIX ?= /usr
 PLUGIN_DIR = ${DESTDIR}${PREFIX}/libexec/netdata/plugins.d
 
-VERSION = 0.1
+VERSION = 0.2
 
 CFLAGS ?= -O2 -pipe
 CFLAGS += -Wall -pedantic
