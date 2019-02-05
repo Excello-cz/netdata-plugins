@@ -74,7 +74,7 @@ scanner_process(const char * line, struct scanner_statistics * data) {
 static
 void
 scanner_print_hdr(const char * name) {
-	nd_chart("scannerd", "scanner", "type", "scanner", "scanner", "", "scanner", "state", ND_CHART_TYPE_STACKED);
+	nd_chart("scannerd", "scanner", "type", "", "", "volume", "scannerd", "type", ND_CHART_TYPE_STACKED);
 	nd_dimension("clear", "Clear", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("clamdscan", "Clamdscan", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("spam_tagged", "SPAM Tagged", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -82,11 +82,11 @@ scanner_print_hdr(const char * name) {
 	nd_dimension("spam_deleted", "SPAM Deleted", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("other", "Other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
-	nd_chart("scannerd", "scanner", "sc", "", "", "", "", "sc", ND_CHART_TYPE_STACKED);
+	nd_chart("scannerd", "scanner", "sc", "", "AntiSPAM Cache", "percentage", "scannerd", "sc", ND_CHART_TYPE_STACKED);
 	nd_dimension("sc_0", "SC:0", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	nd_dimension("sc_1", "SC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 
-	nd_chart("scannerd", "scanner", "cc", "", "", "", "", "cc", ND_CHART_TYPE_STACKED);
+	nd_chart("scannerd", "scanner", "cc", "", "AntiVirus Cache", "percentage", "scannerd", "cc", ND_CHART_TYPE_STACKED);
 	/* scanner does not report :CC:0 correctly, therefore we will dclare CC:0
 	 * everything else from CC:1. Let's call it "The Rest" to force change in scanner
 	 * developer group */
