@@ -16,6 +16,9 @@ struct scanner_statistics {
 	int spam_rejected;
 	int spam_deleted;
 	int other;
+
+	int sc_0;
+	int sc_1;
 };
 
 static
@@ -48,6 +51,12 @@ scanner_process(const char * line, struct scanner_statistics * data) {
 	} else {
 		data->other++;
 	}
+
+	if (strstr(line, ":SC:0")) {
+		data->sc_0++;
+	} else if (strstr(line, ":SC:1")) {
+		data->sc_1++;
+	}
 }
 
 static
@@ -60,6 +69,10 @@ scanner_print_hdr(const char * name) {
 	nd_dimension("spam_rejected", "SPAM Rejected", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("spam_deleted", "SPAM Deleted", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("other", "Other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+
+	nd_chart("scannerd", "scanner", "sc", "", "", "", "", "sc", ND_CHART_TYPE_STACKED);
+	nd_dimension("sc_0", "SC:0", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
+	nd_dimension("sc_1", "SC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	fflush(stdout);
 }
 
@@ -74,6 +87,11 @@ scanner_print(const char * name, const struct scanner_statistics * data,
 	nd_set("spam_rejected", data->spam_rejected);
 	nd_set("spam_deleted", data->spam_deleted);
 	nd_set("other", data->other);
+	nd_end();
+
+	nd_begin_time("scannerd", "scanner", "sc", time);
+	nd_set("sc_0", data->sc_0);
+	nd_set("sc_1", data->sc_1);
 	nd_end();
 
 	fflush(stdout);
