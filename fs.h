@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 
-#define LOG_FILE_NAME "current"
-
 struct fs_watch {
 	const char * dir_name;
+	const char * file_name;
 	int watch_dir;
 	int fd;
 	struct timespec time;

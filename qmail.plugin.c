@@ -45,7 +45,9 @@ static
 enum nd_err
 prepare_watcher(struct fs_watch * watch, const int fd, const struct stat_func * func) {
 	char file_name[PATH_MAX];
-	sprintf(file_name, "%s/current", watch->dir_name);
+
+	watch->file_name = "current";
+	sprintf(file_name, "%s/%s", watch->dir_name, watch->file_name);
 	watch->watch_dir = inotify_add_watch(fd, watch->dir_name, IN_CREATE);
 	if (watch->watch_dir == -1) {
 		perror("inotify_add_watch");
