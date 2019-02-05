@@ -19,6 +19,9 @@ struct scanner_statistics {
 
 	int sc_0;
 	int sc_1;
+
+	int cc_0;
+	int cc_1;
 };
 
 static
@@ -57,6 +60,15 @@ scanner_process(const char * line, struct scanner_statistics * data) {
 	} else if (strstr(line, ":SC:1")) {
 		data->sc_1++;
 	}
+
+	if (strstr(line, ":CC:1")) {
+		data->cc_1++;
+	} else {
+		/* scanner does not report :CC:0 correctly, therefore we will dclare CC:0
+		 * everything else from CC:1. */
+		/* TODO: Fix this when scanner logger is fixed */
+		data->cc_0++;
+	}
 }
 
 static
@@ -73,6 +85,14 @@ scanner_print_hdr(const char * name) {
 	nd_chart("scannerd", "scanner", "sc", "", "", "", "", "sc", ND_CHART_TYPE_STACKED);
 	nd_dimension("sc_0", "SC:0", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	nd_dimension("sc_1", "SC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
+
+	nd_chart("scannerd", "scanner", "cc", "", "", "", "", "cc", ND_CHART_TYPE_STACKED);
+	/* scanner does not report :CC:0 correctly, therefore we will dclare CC:0
+	 * everything else from CC:1. Let's call it "The Rest" to force change in scanner
+	 * developer group */
+	/* TODO: Change "The Rest" to CC:0 when scanner logger is fixed */
+	nd_dimension("cc_0", "The Rest", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
+	nd_dimension("cc_1", "CC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	fflush(stdout);
 }
 
@@ -92,6 +112,11 @@ scanner_print(const char * name, const struct scanner_statistics * data,
 	nd_begin_time("scannerd", "scanner", "sc", time);
 	nd_set("sc_0", data->sc_0);
 	nd_set("sc_1", data->sc_1);
+	nd_end();
+
+	nd_begin_time("scannerd", "scanner", "cc", time);
+	nd_set("cc_0", data->cc_0);
+	nd_set("cc_1", data->cc_1);
 	nd_end();
 
 	fflush(stdout);
