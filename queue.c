@@ -53,6 +53,10 @@ measure_dir(const char * name) {
 	DIR * dir;
 
 	dir = opendir(name);
+	if (dir == NULL) {
+		fprintf(stderr, "Cannot open dir: %s\n", name);
+		return 0;
+	}
 
 	while ((de = readdir(dir))) {
 		if (de->d_name[0] == '.')
