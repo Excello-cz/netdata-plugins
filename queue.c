@@ -7,6 +7,8 @@
 #include <string.h>
 
 #include "callbacks.h"
+#include "err.h"
+#include "fs.h"
 #include "netdata.h"
 #include "queue.h"
 
@@ -67,6 +69,13 @@ measure_dir(const char * name) {
 			res += measure_dir(path);
 		} else if (de->d_type == DT_REG) {
 			res += 1;
+		} else if (de->d_type == DT_UNKNOWN) {
+			sprintf(path, "%s/%s", name, de->d_name);
+			if (is_directory(path)) {
+				res += measure_dir(path);
+			} else {
+				res += 1;
+			}
 		}
 	}
 
