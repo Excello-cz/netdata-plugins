@@ -21,6 +21,7 @@
 #include "vector.h"
 
 #include "fs.h"
+#include "queue.h"
 #include "send.h"
 #include "smtp.h"
 
@@ -61,6 +62,27 @@ prepare_watcher(struct fs_watch * watch, const int fd, const struct stat_func * 
 	if (watch->data == NULL) {
 		return ND_ALLOC;
 	}
+
+	return ND_SUCCESS;
+}
+
+static
+enum nd_err
+append_queue_watcher(struct vector * v) {
+	struct fs_watch watch;
+
+	memset(&watch, 0, sizeof watch);
+	watch.type = WATCH_QUEUE;
+	watch.watch_dir = -1;
+	watch.fd = -1;
+	watch.func = queue_func;
+	watch.data = watch.func->init();
+
+	if (watch.data == NULL) {
+		return ND_ALLOC;
+	}
+
+	vector_add(v, &watch);
 
 	return ND_SUCCESS;
 }
@@ -166,6 +188,7 @@ main(int argc, const char * argv[]) {
 	pfd[POLL_FS_EVENT].events = POLLIN;
 
 	detect_log_dirs(fs_event_fd, &vector);
+	append_queue_watcher(&vector);
 
 	for (i = 0; i < vector.len; i++) {
 		watch = vector_item(&vector, i);
