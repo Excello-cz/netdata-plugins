@@ -27,11 +27,22 @@ check_null(const char * str) {
 	return str ? str : "";
 }
 
+static
+void
+print_type_prefix_id(const char * type, const char * prefix, const char * id) {
+	if (id)
+		printf("%s.%s_%s", type, check_null(prefix), id);
+	else
+		printf("%s.%s", type, check_null(prefix));
+}
+
 void
 nd_chart(const char * type, const char * prefix, const char * id, const char * name,
 		const char * title, const char * units, const char * family, const char * context,
 		enum nd_charttype chart_type) {
-	printf("\nCHART %s.%s_%s '%s' '%s' '%s' '%s' '%s' %s\n", type, check_null(prefix), id,
+	fputs("\nCHART ", stdout);
+	print_type_prefix_id(type, prefix, id);
+	printf(" '%s' '%s' '%s' '%s' '%s' %s\n",
 		check_null(name), check_null(title), check_null(units), check_null(family),
 		check_null(context), nd_charttype_str[chart_type]);
 }
@@ -59,7 +70,8 @@ nd_begin(const char * type, const char * prefix, const char * id) {
 
 void
 nd_begin_time(const char * type, const char * prefix, const char * id, const unsigned long time) {
-	printf("\nBEGIN %s.%s_%s", type, check_null(prefix), id);
+	fputs("\nBEGIN ", stdout);
+	print_type_prefix_id(type, prefix, id);
 	if (time)
 		printf(" %lu", time);
 	putchar('\n');
