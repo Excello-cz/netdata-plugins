@@ -17,6 +17,20 @@ It skips all directories starting with `.` character.
 
 This plugin is currently Linux specific.
 
+# scanner.plugin
+
+`scanner.plugin` is a netdata external plugin. It detects **scannerd** presence by checking `/var/log` directory existence (Well, well, this is obviously incorrect) and there it locates all subdirectories containing `scannerd` in theirs name and prepares data collector for each one of them.
+
+It skips all directories starting with `.` character.
+
+**It collects**:
+
+1. Emails with status `Clear`, `CLAMDSCAN`, `SPAM-TAGGED`, `SPAM-REJECTED` and `SPAM-DELETED`
+2. Spam Cache hits
+3. Antivirus Cache hits
+
+This plugin is currently Linux specific.
+
 ### Plugin restart
 
 It is possible to restart service by sending signal `QUIT`, `TERM` or `INT` (with command `pkill qmail.plugin` for example) and `qmail.plugin` quits successfully
