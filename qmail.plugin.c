@@ -47,6 +47,7 @@ prepare_watcher(struct fs_watch * watch, const int fd, const struct stat_func * 
 	char file_name[PATH_MAX];
 
 	watch->file_name = "current";
+	watch->type = WATCH_LOG_FILE;
 	sprintf(file_name, "%s/%s", watch->dir_name, watch->file_name);
 	watch->watch_dir = inotify_add_watch(fd, watch->dir_name, IN_CREATE);
 	if (watch->watch_dir == -1) {
@@ -194,7 +195,10 @@ main(int argc, const char * argv[]) {
 				for (i = 0; i < vector.len; i++) {
 					watch = vector_item(&vector, i);
 
-					read_log_file(watch);
+					if (watch->type == WATCH_LOG_FILE)
+						read_log_file(watch);
+					else if (watch->type == WATCH_QUEUE)
+						watch->func->process(NULL, watch->data);
 
 					if (watch->func->postprocess)
 						watch->func->postprocess(watch->data);
