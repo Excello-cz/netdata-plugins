@@ -8,7 +8,9 @@ It skips all directories starting with `.` character.
 
 1. connection with status `ok` or `deny`,
 2. average number of connections,
-3. end statuses for `0`, `256`, `25600` or *other* value.
+3. end statuses for `0`, `256`, `25600` or *other* value,
+4. connection via SMTP protocol type `SMTP` or `ESMTPS`,
+5. usage of TLS protocol version `TLS1`, `TLS_1`, `TLS_1.1`, `TLS_1.2` or `TLS_1.3`.
 
 **For send it collects**:
 
