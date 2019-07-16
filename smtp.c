@@ -9,6 +9,11 @@
 
 #include "smtp.h"
 
+/* Netdata collects integer values only. We have to multiply collected value by
+ * this constant and set the DIMENSION divider to the same value if we need
+ * fractional values.  */
+#define FRACTIONAL_CONVERSION 100
+
 struct statistics {
 	int tcp_ok;
 	int tcp_deny;
@@ -101,7 +106,7 @@ print_smtp_header(const char * name) {
 	sprintf(title, "Qmail SMTPD Open Sessions for %s", name);
 	nd_chart("qmail", name, "status", "smtpd statuses", title,
 		"average # sessions", "smtpd", NULL, ND_CHART_TYPE_LINE);
-	nd_dimension("tcp_status_average", "session average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
+	nd_dimension("tcp_status_average", "session average", ND_ALG_ABSOLUTE, 1, FRACTIONAL_CONVERSION, ND_VISIBLE);
 
 	sprintf(title, "Qmail SMTPD End Statuses for %s", name);
 	nd_chart("qmail", name, "end_status", "smtpd end statuses", title,
@@ -174,7 +179,7 @@ static
 void
 postprocess_data(struct statistics * data) {
 	if (data->tcp_status_count)
-		data->tcp_status = data->tcp_status_sum * 100 / data->tcp_status_count;
+		data->tcp_status = data->tcp_status_sum * FRACTIONAL_CONVERSION / data->tcp_status_count;
 }
 
 static
