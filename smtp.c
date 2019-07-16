@@ -20,6 +20,14 @@ struct statistics {
 	int tcp_end_status_256;
 	int tcp_end_status_25600;
 	int tcp_end_status_others;
+
+	int smtp;
+	int esmtps;
+
+	int esmtps_tls_1;
+	int esmtps_tls_1_1;
+	int esmtps_tls_1_2;
+	int esmtps_tls_1_3;
 };
 
 static
@@ -63,6 +71,19 @@ process_smtp(const char * line, struct statistics * data) {
 				break;
 			}
 		}
+	} else if ((ptr = strstr(line, "uses ESMTPS"))) {
+		data->esmtps++;
+		if (strstr(ptr, "TLSv1,")) {
+			data->esmtps_tls_1++;
+		} else if (strstr(ptr, "TLSv1.1,")) {
+			data->esmtps_tls_1_1++;
+		} else if (strstr(ptr, "TLSv1.2,")) {
+			data->esmtps_tls_1_2++;
+		} else if (strstr(ptr, "TLSv1.3,")) {
+			data->esmtps_tls_1_3++;
+		}
+	} else if ((ptr = strstr(line, "uses SMTP"))) {
+		data->smtp++;
 	}
 }
 
@@ -79,7 +100,7 @@ print_smtp_header(const char * name) {
 
 	sprintf(title, "Qmail SMTPD Open Sessions for %s", name);
 	nd_chart("qmail", name, "status", "smtpd statuses", title,
-		"average status", "smtpd", NULL, ND_CHART_TYPE_LINE);
+		"average # sessions", "smtpd", NULL, ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_status_average", "session average", ND_ALG_ABSOLUTE, 1, 100, ND_VISIBLE);
 
 	sprintf(title, "Qmail SMTPD End Statuses for %s", name);
@@ -89,6 +110,21 @@ print_smtp_header(const char * name) {
 	nd_dimension("tcp_end_status_256",    "256",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("tcp_end_status_25600",  "25600", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("tcp_end_status_others", "other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+
+	sprintf(title, "Qmail SMTPD smtp type for %s", name);
+	nd_chart("qmail", name, "smtp_type", "smtp type", title, "# smtp protocols",
+		"smtpd", "", ND_CHART_TYPE_LINE);
+	nd_dimension("smtp",	 "SMTP",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("esmtps", "ESMTPS", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+
+	sprintf(title, "Qmail SMTPD tls connection types for %s", name);
+	nd_chart("qmail", name, "tls", "tls version", title, "# tls versions",
+		"smtpd", "", ND_CHART_TYPE_LINE);
+	nd_dimension("tls1",	 "TLS_1",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("tls1.1",	 "TLS_1.1",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("tls1.2",	 "TLS_1.2",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("tls1.3",	 "TLS_1.3",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+
 	fflush(stdout);
 }
 
@@ -109,6 +145,18 @@ print_smtp_data(const char * name, const struct statistics * data, const unsigne
 	nd_set("tcp_end_status_256", data->tcp_end_status_256);
 	nd_set("tcp_end_status_25600", data->tcp_end_status_25600);
 	nd_set("tcp_end_status_others", data->tcp_end_status_others);
+	nd_end();
+
+	nd_begin_time("qmail", name, "smtp_type", time);
+	nd_set("smtp", data->smtp);
+	nd_set("esmtps", data->esmtps);
+	nd_end();
+
+	nd_begin_time("qmail", name, "tls", time);
+	nd_set("tls1", data->esmtps_tls_1);
+	nd_set("tls1.1", data->esmtps_tls_1_1);
+	nd_set("tls1.2", data->esmtps_tls_1_2);
+	nd_set("tls1.3", data->esmtps_tls_1_3);
 	nd_end();
 
 	fflush(stdout);
