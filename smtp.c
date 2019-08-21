@@ -33,6 +33,7 @@ struct statistics {
 	int esmtps_tls_1_1;
 	int esmtps_tls_1_2;
 	int esmtps_tls_1_3;
+	int esmtps_unknown;
 };
 
 static
@@ -86,6 +87,8 @@ process_smtp(const char * line, struct statistics * data) {
 			data->esmtps_tls_1_2++;
 		} else if (strstr(ptr, "TLSv1.3,")) {
 			data->esmtps_tls_1_3++;
+		} else {
+			data->esmtps_unknown++;
 		}
 	} else if ((ptr = strstr(line, "uses SMTP"))) {
 		data->smtp++;
@@ -129,6 +132,7 @@ print_smtp_header(const char * name) {
 	nd_dimension("tls1.1",	 "TLS_1.1",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("tls1.2",	 "TLS_1.2",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("tls1.3",	 "TLS_1.3",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("unknown",	 "unknown",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 
 	fflush(stdout);
 }
@@ -162,6 +166,7 @@ print_smtp_data(const char * name, const struct statistics * data, const unsigne
 	nd_set("tls1.1", data->esmtps_tls_1_1);
 	nd_set("tls1.2", data->esmtps_tls_1_2);
 	nd_set("tls1.3", data->esmtps_tls_1_3);
+	nd_set("unknown", data->esmtps_unknown);
 	nd_end();
 
 	fflush(stdout);
