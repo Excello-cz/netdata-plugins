@@ -38,13 +38,13 @@ print_send_hdr(const char * name) {
 	char title[BUFSIZ];
 
 	sprintf(title, "Qmail Send for %s", name);
-	nd_chart("qmail", name, "", "send qmail", title, "# send", NULL, "send", ND_CHART_TYPE_AREA);
+	nd_chart("qmail", name, "", "send qmail", title, "# send", NULL, "qmail.send", ND_CHART_TYPE_AREA);
 	nd_dimension("start_delivery", "Start/End Delivery", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("end_msg", "End Msg", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
 
 	sprintf(title, "Qmail Send delivery status for %s", name);
 	nd_chart("qmail", name, "delivery", "send delivery", title,
-		"# deliveries", NULL, "send_delivery", ND_CHART_TYPE_LINE);
+		"# deliveries", NULL, "qmail.send_delivery", ND_CHART_TYPE_LINE);
 	nd_dimension("delivery_success",  "Success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("delivery_failure",  "Failure", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("delivery_deferral", "Deferral", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);

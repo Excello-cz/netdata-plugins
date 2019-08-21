@@ -99,18 +99,18 @@ print_smtp_header(const char * name) {
 
 	sprintf(title, "Qmail SMTPD for %s", name);
 	nd_chart("qmail", name, "", "smtpd qmail", title, "# smtpd connections",
-		"smtpd", "con", ND_CHART_TYPE_AREA);
+		"smtpd", "qmail.qmail_smtpd", ND_CHART_TYPE_AREA);
 	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE,  1, 1, ND_VISIBLE);
 	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
 
 	sprintf(title, "Qmail SMTPD Open Sessions for %s", name);
 	nd_chart("qmail", name, "status", "smtpd statuses", title,
-		"average # sessions", "smtpd", NULL, ND_CHART_TYPE_LINE);
+		"average # sessions", "smtpd", "qmail.qmail_smtpd_status", ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_status_average", "session average", ND_ALG_ABSOLUTE, 1, FRACTIONAL_CONVERSION, ND_VISIBLE);
 
 	sprintf(title, "Qmail SMTPD End Statuses for %s", name);
 	nd_chart("qmail", name, "end_status", "smtpd end statuses", title,
-		"# smtpd end statuses", "smtpd", NULL, ND_CHART_TYPE_LINE);
+		"# smtpd end statuses", "smtpd", "qmail.qmail_smtpd_end_status", ND_CHART_TYPE_LINE);
 	nd_dimension("tcp_end_status_0",      "0",     ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("tcp_end_status_256",    "256",   ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("tcp_end_status_25600",  "25600", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -118,13 +118,13 @@ print_smtp_header(const char * name) {
 
 	sprintf(title, "Qmail SMTPD smtp type for %s", name);
 	nd_chart("qmail", name, "smtp_type", "smtp type", title, "# smtp protocols",
-		"smtpd", "", ND_CHART_TYPE_LINE);
+		"smtpd", "qmail.smtp_type", ND_CHART_TYPE_LINE);
 	nd_dimension("smtp",	 "SMTP",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("esmtps", "ESMTPS", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
 	sprintf(title, "Qmail SMTPD tls connection types for %s", name);
 	nd_chart("qmail", name, "tls", "tls version", title, "# tls versions",
-		"smtpd", "", ND_CHART_TYPE_LINE);
+		"smtpd", "qmail.qmail_smtpd_tls", ND_CHART_TYPE_LINE);
 	nd_dimension("tls1",	 "TLS_1",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("tls1.1",	 "TLS_1.1",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("tls1.2",	 "TLS_1.2",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
