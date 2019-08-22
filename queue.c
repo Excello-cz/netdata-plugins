@@ -103,11 +103,11 @@ struct stat_func queue = {
 	.init = &queue_data_init,
 	.fini = &free,
 
-	.print_hdr = &print_queue_hdr,
-	.print = &print_queue_data,
-	.process = &measure_queue,
+	.print_hdr   = &print_queue_hdr,
+	.print       = (void (*)(const char *, const void *, unsigned long))&print_queue_data,
+	.process     = (void (*)(const char *, void *))&measure_queue,
 	.postprocess = NULL,
-	.clear = &clear_data,
+	.clear       = (void (*)(void *))&clear_data,
 };
 
 struct stat_func * queue_func = &queue;

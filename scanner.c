@@ -127,13 +127,11 @@ struct stat_func scanner = {
 	.init = &scanner_data_init,
 	.fini = &free,
 
-	.print_hdr = scanner_print_hdr,
-	.print = scanner_print,
-
-	.process = scanner_process,
-
+	.print_hdr   = scanner_print_hdr,
+	.print       = (void (*)(const char *, const void *, unsigned long))scanner_print,
+	.process     = (void (*)(const char *, void *))scanner_process,
 	.postprocess = NULL,
-	.clear = &scanner_clear,
+	.clear       = (void (*)(void *))&scanner_clear,
 };
 
 struct stat_func * scanner_func = &scanner;

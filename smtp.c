@@ -191,11 +191,12 @@ static
 struct stat_func smtp = {
 	.init = &smtp_data_init,
 	.fini = &free,
-	.print_hdr = &print_smtp_header,
-	.print = &print_smtp_data,
-	.process = &process_smtp,
-	.postprocess = &postprocess_data,
-	.clear = &clear_smtp_data,
+
+	.print_hdr   = &print_smtp_header,
+	.print       = (void (*)(const char *, const void *, unsigned long))&print_smtp_data,
+	.process     = (void (*)(const char *, void *))&process_smtp,
+	.postprocess = (void (*)(void *))&postprocess_data,
+	.clear       = (void (*)(void *))&clear_smtp_data,
 };
 
 struct stat_func * smtp_func = &smtp;

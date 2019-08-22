@@ -94,11 +94,11 @@ struct stat_func send = {
 	.init = &send_data_init,
 	.fini = &free,
 
-	.print_hdr = &print_send_hdr,
-	.print = &print_send_data,
-	.process = &process_send_log_line,
+	.print_hdr   = &print_send_hdr,
+	.print       = (void (*)(const char *, const void *, unsigned long))&print_send_data,
+	.process     = (void (*)(const char *, void *))&process_send_log_line,
 	.postprocess = NULL,
-	.clear = &clear_send_statistics,
+	.clear       = (void (*)(void *))&clear_send_statistics,
 };
 
 struct stat_func * send_func = &send;
