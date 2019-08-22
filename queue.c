@@ -29,9 +29,9 @@ queue_data_init() {
 static
 void
 print_queue_hdr(const char * name) {
-	nd_chart("qmail", "queue", NULL, NULL, NULL, NULL, NULL, NULL, ND_CHART_TYPE_AREA);
+	nd_chart("qmail", "queue", NULL, NULL, NULL, NULL, NULL, "qmail.queue", ND_CHART_TYPE_AREA);
 	nd_dimension("mess", NULL, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	nd_dimension("todo", NULL, ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
+	nd_dimension("todo", NULL, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
 	fflush(stdout);
 }
