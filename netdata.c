@@ -72,8 +72,14 @@ void
 nd_begin_time(const char * type, const char * prefix, const char * id, const unsigned long time) {
 	fputs("\nBEGIN ", stdout);
 	print_type_prefix_id(type, prefix, id);
-	if (time)
+
+	/* Everything less then 10ms is ignored (the constant is in microseconds).
+	 * We should not give this value first time the plugin is started, which is
+	 * usually less than 10ms after the plugin start. */
+	if (time > 10000) {
 		printf(" %lu", time);
+	}
+
 	putchar('\n');
 }
 
