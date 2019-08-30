@@ -13,6 +13,7 @@
 
 #include "err.h"
 #include "netdata.h"
+#include "timer.h"
 
 #include "fs.h"
 
@@ -73,6 +74,8 @@ collect_uptime(const char * dir) {
 
 int
 main(int argc, char * argv[]) {
+	unsigned long last_update;
+	struct timespec timestamp;
 	struct dirent * dir_entry;
 	const char * dir_name;
 	const char * argv0;
@@ -112,10 +115,12 @@ main(int argc, char * argv[]) {
 			nd_dimension(dir_name, dir_name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	}
 	fflush(stdout);
+	clock_gettime(CLOCK_REALTIME, &timestamp);
 
 	while (1) {
 		rewinddir(dir);
-		nd_begin("daemontools", "svstat", NULL);
+		last_update = update_timestamp(&timestamp);
+		nd_begin_time("daemontools", "svstat", NULL, last_update);
 		while ((dir_entry = readdir(dir))) {
 			dir_name = dir_entry->d_name;
 
