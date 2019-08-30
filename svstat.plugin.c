@@ -4,6 +4,7 @@
 #include <endian.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +28,8 @@ struct dt_stat {
 	uint8_t  want;
 };
 
+int run;
+
 static
 void
 usage(const char * name) {
@@ -37,6 +40,12 @@ static inline
 uint64_t
 tai_now() {
 	return 4611686018427387914ULL + time(NULL);
+}
+
+static
+void
+quit(int unused) {
+	run = 0;
 }
 
 uint64_t
@@ -103,6 +112,10 @@ main(int argc, char * argv[]) {
 		exit(1);
 	}
 
+	signal(SIGQUIT, quit);
+	signal(SIGTERM, quit);
+	signal(SIGINT, quit);
+
 	dir = opendir(".");
 	nd_chart("daemontools", "svstat", NULL, NULL, NULL, "time", NULL, "daemontools.svstat", ND_CHART_TYPE_LINE);
 	while ((dir_entry = readdir(dir))) {
@@ -117,7 +130,7 @@ main(int argc, char * argv[]) {
 	fflush(stdout);
 	clock_gettime(CLOCK_REALTIME, &timestamp);
 
-	while (1) {
+	for (run = 1; run;) {
 		rewinddir(dir);
 		last_update = update_timestamp(&timestamp);
 		nd_begin_time("daemontools", "svstat", NULL, last_update);
