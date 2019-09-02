@@ -1,4 +1,8 @@
-# qmail.plugin
+# Netdata plugins
+
+You just have reached a small collection of [netdata](https://github.com/netdata/netdata) external plugins for [qmail](http://cr.yp.to/qmail.html) data monitoring gathering and [daemontools](http://cr.yp.to/daemontools.html).
+
+## qmail.plugin
 
 `qmail.plugin` is a netdata external plugin. It detects **qmail** presence by checking `/var/log/qmail` directory existence and there it locates all subdirectories containing `smtp` or `send` in theirs name and prepares data collector for each one of them.
 
@@ -19,7 +23,7 @@ It skips all directories starting with `.` character.
 
 This plugin is currently Linux specific.
 
-# scanner.plugin
+## scanner.plugin
 
 `scanner.plugin` is a netdata external plugin. It detects **scannerd** presence by checking `/var/log` directory existence (Well, well, this is obviously incorrect) and there it locates all subdirectories containing `scannerd` in theirs name and prepares data collector for each one of them.
 
@@ -33,11 +37,13 @@ It skips all directories starting with `.` character.
 
 This plugin is currently Linux specific.
 
-# svstat.plugin
+## svstat.plugin
 
 `svstat.plugin` is a netdata external plugin. It detects presence of a [daemontools](http://cr.yp.to/daemontools.html) `/service` directory and enumerates `uptime`/`downtime` of all individual services. The plugin collects uptime or downtime in, respectively, positive or negative number of seconds since last change of the service.
 
 The plugin skips all subdirectories starting with `.` character.
+
+## Configuration
 
 ### Plugin restart
 
