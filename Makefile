@@ -14,7 +14,8 @@ CPPFLAGS += -D_GNU_SOURCE
 
 BIN = \
 	qmail.plugin \
-	scanner.plugin
+	scanner.plugin \
+	svstat.plugin
 
 SHARED_OBJ = flush.o fs.o netdata.o signal.o timer.o vector.o
 
@@ -24,9 +25,11 @@ all: $(BIN)
 ## Dependencies
 qmail.plugin: qmail.plugin.o $(SHARED_OBJ) queue.o send.o smtp.o
 scanner.plugin: scanner.plugin.o $(SHARED_OBJ) scanner.o
+svstat.plugin: fs.o netdata.o timer.o
 
 qmail.plugin.o: flush.h fs.h send.h signal.h timer.h vector.h
 scanner.plugin.o: flush.h
+svstat.plugin.o: fs.h netdata.h
 
 err.o: err.c err.h
 flush.o: flush.c flush.h

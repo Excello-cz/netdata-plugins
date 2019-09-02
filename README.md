@@ -33,6 +33,12 @@ It skips all directories starting with `.` character.
 
 This plugin is currently Linux specific.
 
+# svstat.plugin
+
+`svstat.plugin` is a netdata external plugin. It detects presence of a [daemontools](http://cr.yp.to/daemontools.html) `/service` directory and enumerates `uptime`/`downtime` of all individual services. The plugin collects uptime or downtime in, respectively, positive or negative number of seconds since last change of the service.
+
+The plugin skips all subdirectories starting with `.` character.
+
 ### Plugin restart
 
 It is possible to restart service by sending signal `QUIT`, `TERM` or `INT` (with command `pkill qmail.plugin` for example) and `qmail.plugin` quits successfully
