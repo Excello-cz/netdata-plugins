@@ -117,7 +117,7 @@ main(int argc, char * argv[]) {
 	signal(SIGINT, quit);
 
 	dir = opendir(".");
-	nd_chart("daemontools", "svstat", NULL, NULL, NULL, "time", NULL, "daemontools.svstat", ND_CHART_TYPE_LINE);
+	nd_chart("daemontools", "uptime", NULL, NULL, "Service Uptime", "seconds", "uptime", "daemontools.uptime", ND_CHART_TYPE_LINE);
 	while ((dir_entry = readdir(dir))) {
 		dir_name = dir_entry->d_name;
 
@@ -133,7 +133,7 @@ main(int argc, char * argv[]) {
 	for (run = 1; run;) {
 		rewinddir(dir);
 		last_update = update_timestamp(&timestamp);
-		nd_begin_time("daemontools", "svstat", NULL, last_update);
+		nd_begin_time("daemontools", "uptime", NULL, last_update);
 		while ((dir_entry = readdir(dir))) {
 			dir_name = dir_entry->d_name;
 
