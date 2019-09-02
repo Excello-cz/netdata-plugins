@@ -39,7 +39,7 @@ This plugin is currently Linux specific.
 
 ## svstat.plugin
 
-`svstat.plugin` is a netdata external plugin. It detects presence of a [daemontools](http://cr.yp.to/daemontools.html) `/service` directory and enumerates `uptime`/`downtime` of all individual services. The plugin collects uptime or downtime in, respectively, positive or negative number of seconds since last change of the service.
+`svstat.plugin` is a netdata external plugin. It detects presence of a [daemontools](http://cr.yp.to/daemontools.html) by changing working directory to `/service`. The plugin collects uptime or downtime, respectively, in positive or negative number of seconds since last change of the service. The information is gathered from `supervise/status` file in similar manner as [svstat](http://cr.yp.to/daemontools/svstat.html) does, however, the file is accessible only for root by default (This is feature of [supervise](http://cr.yp.to/daemontools/supervise.html) program), therefore `svstat.plugin` has to have `suid` flag set or `CAP_DAC_READ_SEARCH` capability on linux.
 
 The plugin skips all subdirectories starting with `.` character.
 
