@@ -45,6 +45,14 @@ The plugin skips all subdirectories starting with `.` character.
 
 ## Configuration
 
+All plugins are configured via [netdata.conf](https://github.com/netdata/netdata/tree/master/collectors/plugins.d#configuration). For example, user may wish to change granularity of data gathering by `svstat.plugin` to 10 seconds:
+
+```cfg
+[plugin:svstat]
+	update every = 10
+	# command options =
+```
+
 ### Plugin restart
 
 It is possible to restart service by sending signal `QUIT`, `TERM` or `INT` (with command `pkill qmail.plugin` for example) and `qmail.plugin` quits successfully
