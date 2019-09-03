@@ -1,6 +1,12 @@
 # Netdata plugins
 
-You just have reached a small collection of [netdata](https://github.com/netdata/netdata) external plugins for [qmail](http://cr.yp.to/qmail.html) data monitoring gathering and [daemontools](http://cr.yp.to/daemontools.html).
+You just have reached a small collection of [netdata](https://github.com/netdata/netdata) external plugins for [daemontools](http://cr.yp.to/daemontools.html) data monitoring gathering, [qmail](http://cr.yp.to/qmail.html) and [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/).
+
+## svstat.plugin
+
+`svstat.plugin` is a netdata external plugin. It detects presence of a [daemontools](http://cr.yp.to/daemontools.html) by changing working directory to `/service`. The plugin collects uptime or downtime, respectively, in positive or negative number of seconds since last change of the service. The information is gathered from `supervise/status` file in similar manner as [svstat](http://cr.yp.to/daemontools/svstat.html) does, however, the file is accessible only for root by default (This is feature of [supervise](http://cr.yp.to/daemontools/supervise.html) program), therefore `svstat.plugin` has to have `suid` flag set or `CAP_DAC_READ_SEARCH` capability on linux.
+
+The plugin skips all subdirectories starting with `.` character.
 
 ## qmail.plugin
 
@@ -36,12 +42,6 @@ It skips all directories starting with `.` character.
 3. Antivirus Cache hits
 
 This plugin is currently Linux specific.
-
-## svstat.plugin
-
-`svstat.plugin` is a netdata external plugin. It detects presence of a [daemontools](http://cr.yp.to/daemontools.html) by changing working directory to `/service`. The plugin collects uptime or downtime, respectively, in positive or negative number of seconds since last change of the service. The information is gathered from `supervise/status` file in similar manner as [svstat](http://cr.yp.to/daemontools/svstat.html) does, however, the file is accessible only for root by default (This is feature of [supervise](http://cr.yp.to/daemontools/supervise.html) program), therefore `svstat.plugin` has to have `suid` flag set or `CAP_DAC_READ_SEARCH` capability on linux.
-
-The plugin skips all subdirectories starting with `.` character.
 
 ## Configuration
 
