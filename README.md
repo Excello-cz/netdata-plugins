@@ -55,6 +55,14 @@ All plugins are configured via [netdata.conf](https://github.com/netdata/netdata
 	# command options =
 ```
 
+All plugins accept value from `update every` parameter as a first argument (1 second by default). The second optional argument, from `command options` parameter, is a path to a directory, which plugin tries to set as a working directory at the beginning of its execution. For example, user may wish to set default path of a daemontools service directory to `/run/service` (rather than default `/service`) for `svstat.plugin`:
+
+```cfg
+[plugin:svstat]
+	update every = 10
+	command options = /run/service
+```
+
 ### Plugin restart
 
 It is possible to restart service by sending signal `QUIT`, `TERM` or `INT` (with command `pkill qmail.plugin` for example) and `qmail.plugin` quits successfully
