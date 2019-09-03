@@ -31,7 +31,7 @@ This plugin is currently Linux specific.
 
 ## scanner.plugin
 
-`scanner.plugin` is a netdata external plugin. It detects **scannerd** presence by checking `/var/log` directory existence (Well, well, this is obviously incorrect) and there it locates all subdirectories containing `scannerd` in theirs name and prepares data collector for each one of them.
+`scanner.plugin` is a netdata external plugin for monitoring of **scannerd**, which is proprietary software with a log output similar to [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/). It detects **scannerd** presence by checking `/var/log` directory existence (Well, well, this is obviously incorrect), it locates all subdirectories containing `scannerd` in theirs name there and prepares data collector for each one of them.
 
 It skips all directories starting with `.` character.
 
@@ -40,6 +40,8 @@ It skips all directories starting with `.` character.
 1. Emails with status `Clear`, `CLAMDSCAN`, `SPAM-TAGGED`, `SPAM-REJECTED` and `SPAM-DELETED`
 2. Spam Cache hits
 3. Antivirus Cache hits
+
+The [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/) does not measure _Spam Cache hits_ and _Antivirus Cache hist_, but the collector should work for it either. However, it was not tested.
 
 This plugin is currently Linux specific.
 
