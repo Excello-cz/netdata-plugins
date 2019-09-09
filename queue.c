@@ -13,6 +13,8 @@
 #include "netdata.h"
 #include "queue.h"
 
+#define QMAIL_QUEUE_PATH "/var/qmail/queue/"
+
 struct queue_statistics {
 	int mess;
 	int todo;
@@ -22,6 +24,15 @@ static
 void *
 queue_data_init() {
 	struct queue_statistics * ret;
+
+	if (is_directory(QMAIL_QUEUE_PATH "mess") != 1) {
+		return NULL;
+	}
+
+	if (is_directory(QMAIL_QUEUE_PATH "todo") != 1) {
+		return NULL;
+	}
+
 	ret = calloc(1, sizeof * ret);
 	return ret;
 }
@@ -88,8 +99,8 @@ measure_dir(const char * name) {
 static
 void
 measure_queue(const char * unused, struct queue_statistics * data) {
-	data->mess = measure_dir("/var/qmail/queue/mess");
-	data->todo = measure_dir("/var/qmail/queue/todo");
+	data->mess = measure_dir(QMAIL_QUEUE_PATH "mess");
+	data->todo = measure_dir(QMAIL_QUEUE_PATH "todo");
 }
 
 static
