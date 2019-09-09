@@ -181,6 +181,11 @@ main(int argc, const char * argv[]) {
 	detect_log_dirs(fs_event_fd, &vector);
 	append_queue_watcher(&vector);
 
+	if (vector_is_empty(&vector)) {
+		fprintf(stderr, "Nothing to log for qmail\n");
+		exit(1);
+	}
+
 	for (i = 0; i < vector.len; i++) {
 		watch = vector_item(&vector, i);
 		watch->func->print_hdr(watch->dir_name);
