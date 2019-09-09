@@ -27,6 +27,13 @@ It skips all directories starting with `.` character.
 1. number of `start delivery` and `end msg`,
 2. number of delivery `success`, `failure` or `deferral`.
 
+**For queue it collects**:
+
+1. number of files in `mess` directory and its subdirectories
+1. number of files in `todo` directory and its subdirectories
+
+The plugin expects `mess` and `todo` to be located in `/var/qmail/queue`.
+
 This plugin is currently Linux specific.
 
 ## scanner.plugin
