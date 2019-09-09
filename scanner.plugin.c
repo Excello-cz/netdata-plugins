@@ -131,7 +131,7 @@ main(int argc, const char * argv[]) {
 		/* TODO: Maybe we can distinguish all return values
 		 *  1 - it is a directory
 		 *  0 - it is not a directory
-		 * -1 - an error; file does not exit, etc.
+		 * -1 - an error; directory does not exist, etc.
 		 */
 		exit(1);
 	}
