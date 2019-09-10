@@ -67,11 +67,12 @@ collect_uptime(const char * dir) {
 	}
 
 	ret = read(fd, status, sizeof status);
+	close(fd);
+
 	if (ret < sizeof status) {
 		fprintf(stderr, "Cannot read supervise/status\n");
 		return 0;
 	}
-	close(fd);
 
 	stat = (void *)status;
 	time = tai_now() - be64toh(stat->seconds);
