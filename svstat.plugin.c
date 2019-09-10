@@ -93,6 +93,7 @@ main(int argc, char * argv[]) {
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
+	int dir_fd;
 	DIR * dir;
 
 	path = DEFAULT_PATH;
@@ -135,6 +136,13 @@ main(int argc, char * argv[]) {
 			}
 		}
 	}
+	closedir(dir);
+
+	dir_fd = open(".", O_DIRECTORY | O_RDONLY | O_NDELAY);
+	if (dir_fd == -1) {
+		fprintf(stderr, "Cannot open directory '%s': %s\n", path, strerror(errno));
+		exit(1);
+	}
 
 	nd_chart("daemontools", "uptime", NULL, NULL, "Service Uptime", "seconds", "uptime", "daemontools.uptime", ND_CHART_TYPE_LINE);
 	for (int i = 0; i < directories.len; i++) {
@@ -151,7 +159,7 @@ main(int argc, char * argv[]) {
 		for (int i = 0; i < directories.len; i++) {
 			dir_name = *(char **)vector_item(&directories, i);
 			nd_set(dir_name, collect_uptime(dir_name));
-			if (fchdir(dirfd(dir)) == -1) {
+			if (fchdir(dir_fd) == -1) {
 				fprintf(stderr, "Cannot change directory back to '%s': %s\n", path, strerror(errno));
 				break;
 			}
@@ -160,7 +168,7 @@ main(int argc, char * argv[]) {
 		fflush(stdout);
 		sleep(timeout);
 	}
-	closedir(dir);
+	close(dir_fd);
 	for (int i = 0; i < directories.len; i++) {
 		free(*(char **)vector_item(&directories, i));
 	}
