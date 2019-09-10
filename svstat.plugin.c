@@ -62,7 +62,7 @@ collect_uptime(const char * dir) {
 
 	fd = open("supervise/status", O_RDONLY | O_NDELAY);
 	if (fd == -1) {
-		fprintf(stderr, "Cannot open supervise/status: %s\n", strerror(errno));
+		fprintf(stderr, "Cannot open %s/supervise/status: %s\n", dir, strerror(errno));
 		return 0;
 	}
 
