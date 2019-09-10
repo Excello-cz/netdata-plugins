@@ -138,6 +138,11 @@ main(int argc, char * argv[]) {
 	}
 	closedir(dir);
 
+	if (vector_is_empty(&directories)) {
+		fprintf(stderr, "No service directory detected\n");
+		exit(1);
+	}
+
 	dir_fd = open(".", O_DIRECTORY | O_RDONLY | O_NDELAY);
 	if (dir_fd == -1) {
 		fprintf(stderr, "Cannot open directory '%s': %s\n", path, strerror(errno));
