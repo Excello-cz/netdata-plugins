@@ -15,6 +15,7 @@
 #include "err.h"
 #include "netdata.h"
 #include "timer.h"
+#include "vector.h"
 
 #include "fs.h"
 
@@ -84,6 +85,7 @@ collect_uptime(const char * dir) {
 
 int
 main(int argc, char * argv[]) {
+	struct vector directories = VECTOR_EMPTY;
 	unsigned long last_update;
 	struct timespec timestamp;
 	struct dirent * dir_entry;
@@ -117,34 +119,38 @@ main(int argc, char * argv[]) {
 	signal(SIGTERM, quit);
 	signal(SIGINT, quit);
 
+	vector_init(&directories, sizeof(char *));
+
 	dir = opendir(".");
-	nd_chart("daemontools", "uptime", NULL, NULL, "Service Uptime", "seconds", "uptime", "daemontools.uptime", ND_CHART_TYPE_LINE);
 	while ((dir_entry = readdir(dir))) {
 		dir_name = dir_entry->d_name;
 
 		if (dir_name[0] == '.')
 			continue;
 
-		if (is_directory(dir_name) == 1)
-			nd_dimension(dir_name, dir_name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+		if (is_directory(dir_name) == 1) {
+			const char * dup_name = strdup(dir_name);
+			if (dup_name) {
+				vector_add(&directories, &dup_name);
+			}
+		}
+	}
+
+	nd_chart("daemontools", "uptime", NULL, NULL, "Service Uptime", "seconds", "uptime", "daemontools.uptime", ND_CHART_TYPE_LINE);
+	for (int i = 0; i < directories.len; i++) {
+		dir_name = *(char **)vector_item(&directories, i);
+		nd_dimension(dir_name, dir_name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	}
 	fflush(stdout);
+
 	clock_gettime(CLOCK_REALTIME, &timestamp);
 
 	for (run = 1; run;) {
-		rewinddir(dir);
 		last_update = update_timestamp(&timestamp);
 		nd_begin_time("daemontools", "uptime", NULL, last_update);
-		while ((dir_entry = readdir(dir))) {
-			dir_name = dir_entry->d_name;
-
-			if (dir_name[0] == '.')
-				continue;
-
-			if (is_directory(dir_name) == 1) {
-				nd_set(dir_name, collect_uptime(dir_name));
-			}
-
+		for (int i = 0; i < directories.len; i++) {
+			dir_name = *(char **)vector_item(&directories, i);
+			nd_set(dir_name, collect_uptime(dir_name));
 			if (fchdir(dirfd(dir)) == -1) {
 				fprintf(stderr, "Cannot change directory back to '%s': %s\n", path, strerror(errno));
 				break;
@@ -155,5 +161,9 @@ main(int argc, char * argv[]) {
 		sleep(timeout);
 	}
 	closedir(dir);
+	for (int i = 0; i < directories.len; i++) {
+		free(*(char **)vector_item(&directories, i));
+	}
+	vector_free(&directories);
 	return 0;
 }
