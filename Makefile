@@ -15,32 +15,37 @@ CPPFLAGS += -D_GNU_SOURCE
 BIN = \
 	qmail.plugin \
 	scanner.plugin \
-	svstat.plugin
+	svstat.plugin \
+	parser.plugin
 
-SHARED_OBJ = flush.o fs.o netdata.o signal.o timer.o vector.o
+OBJS_COMMON = flush.o fs.o netdata.o signal.o timer.o vector.o
+
+HEADERS_COMMON = fs.h err.h timer.h vector.h
 
 .PHONY: all
 all: $(BIN)
 
 ## Dependencies
-qmail.plugin: qmail.plugin.o $(SHARED_OBJ) queue.o send.o smtp.o
-scanner.plugin: scanner.plugin.o $(SHARED_OBJ) scanner.o
+qmail.plugin: qmail.plugin.o $(OBJS_COMMON) queue.o send.o smtp.o
+scanner.plugin: scanner.plugin.o $(OBJS_COMMON) scanner.o
 svstat.plugin: fs.o netdata.o timer.o vector.o
+parser.plugin: parser.plugin.o $(OBJS_COMMON) parser.o
 
-qmail.plugin.o: flush.h fs.h send.h signal.h timer.h vector.h
-scanner.plugin.o: flush.h
-svstat.plugin.o: fs.h netdata.h timer.h vector.h
+qmail.plugin.o: $(HEADERS_COMMON) flush.h signal.h queue.h send.h smtp.h
+scanner.plugin.o: $(HEADERS_COMMON) flush.h signal.h scanner.h
+svstat.plugin.o: $(HEADERS_COMMON) netdata.h
+parser.plugin.o: flush.h fs.h signal.h timer.h vector.h
 
-err.o: err.c err.h
 flush.o: flush.c flush.h
-fs.o: fs.c fs.h
+fs.o: fs.c fs.h err.h callbacks.h
 netdata.o: netdata.c netdata.h
-queue.o: queue.c callbacks.h netdata.h queue.h
-send.o: send.c send.h
+queue.o: queue.c queue.h callbacks.h netdata.h err.h fs.h
+send.o: send.c send.h callbacks.h netdata.h
 signal.o: signal.c signal.h
-smtp.o: smtp.c smtp.h
+smtp.o: smtp.c smtp.h callbacks.h netdata.h
 timer.o: timer.c timer.h
-vector.o: vector.c vector.h
+vector.o: vector.c vector.h err.h
+parser.o: parser.c parser.h
 
 .PHONY: install
 install: all
