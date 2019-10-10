@@ -2,6 +2,19 @@
 
 You just have reached a small collection of [netdata](https://github.com/netdata/netdata) external plugins for [daemontools](http://cr.yp.to/daemontools.html) data monitoring gathering, [qmail](http://cr.yp.to/qmail.html) and [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/).
 
+## parser.plugin
+
+`parser.plugin` is a netdata external plugin for monitoring output of **parser** cronjob. **parser** is used for processing of **scannerd** and **qmail-send** logs and loading processed logs into database. It detects **parser** presence by locating all directories with `scannerd` substring in its name inside `/var/log` directory and prepares a data collector for each one of them. The plugin is deactivated if there is no such directory.
+
+**It collects**:
+
+1. Failed connection to DB marked as `conn_failed`
+2. Successfull and failed updates of scanner and delivery tables marked as `scanner_success`, `scanner_failed`, `delivery_success` and `delivery_failed`.
+3. Successfull and failed updates of unknown tables marked as `unknown_success` and `unknown_failed`
+4. Unknown log lines marked as `other`
+
+This plugin is currently Linux specific.
+
 ## svstat.plugin
 
 `svstat.plugin` is a netdata external plugin. It detects presence of a [daemontools](http://cr.yp.to/daemontools.html) by changing working directory to `/service`. The plugin collects uptime or downtime, respectively, in positive or negative number of seconds since last change of the service. The information is gathered from `supervise/status` file in similar manner as [svstat](http://cr.yp.to/daemontools/svstat.html) does, however, the file is accessible only for root by default (This is feature of [supervise](http://cr.yp.to/daemontools/supervise.html) program), therefore `svstat.plugin` has to have `suid` flag set or `CAP_DAC_READ_SEARCH` capability on linux.
