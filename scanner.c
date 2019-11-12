@@ -63,10 +63,7 @@ scanner_process(const char * line, struct scanner_statistics * data) {
 
 	if (strstr(line, ":CC:1")) {
 		data->cc_1++;
-	} else {
-		/* scanner does not report :CC:0 correctly, therefore we will dclare CC:0
-		 * everything else from CC:1. */
-		/* TODO: Fix this when scanner logger is fixed */
+	} else if (strstr(line, ":CC:0")) {
 		data->cc_0++;
 	}
 }
@@ -87,11 +84,7 @@ scanner_print_hdr(const char * name) {
 	nd_dimension("sc_1", "SC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 
 	nd_chart("scannerd", name, "cc", "", "AntiVirus Cache", "percentage", "scannerd", "scannerd.scannerd_cc", ND_CHART_TYPE_STACKED);
-	/* scanner does not report :CC:0 correctly, therefore we will dclare CC:0
-	 * everything else from CC:1. Let's call it "The Rest" to force change in scanner
-	 * developer group */
-	/* TODO: Change "The Rest" to CC:0 when scanner logger is fixed */
-	nd_dimension("cc_0", "The Rest", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
+	nd_dimension("cc_0", "CC:0", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	nd_dimension("cc_1", "CC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	fflush(stdout);
 }
