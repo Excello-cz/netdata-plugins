@@ -1,6 +1,6 @@
 # Netdata plugins
 
-You just have reached a small collection of [netdata](https://github.com/netdata/netdata) external plugins for [daemontools](http://cr.yp.to/daemontools.html) data monitoring gathering, [qmail](http://cr.yp.to/qmail.html) and [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/).
+You just have reached a small collection of [netdata](https://github.com/netdata/netdata) external plugins for [daemontools](http://cr.yp.to/daemontools.html) data monitoring gathering, [qmail](http://cr.yp.to/qmail.html), [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/) and [parser](https://www.virusfree.cz/en/) (proprietary tool for processing of logs of [qmail](http://cr.yp.to/qmail.html) and [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/)) together with several defined allarms for specific metrics collected.
 
 ## parser.plugin
 
@@ -60,6 +60,7 @@ It skips all directories starting with `.` character.
 1. Emails with status `Clear`, `CLAMDSCAN`, `SPAM-TAGGED`, `SPAM-REJECTED` and `SPAM-DELETED`
 2. Spam Cache hits
 3. Antivirus Cache hits
+4. Duration of scan
 
 The [qmail-scanner](http://toribio.apollinare.org/qmail-scanner/) does not measure _Spam Cache hits_ and _Antivirus Cache hist_, but the collector should work for it either. However, it was not tested.
 
