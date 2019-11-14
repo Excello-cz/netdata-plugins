@@ -79,11 +79,9 @@ scanner_print_hdr(const char * name) {
 	nd_dimension("spam_deleted", "SPAM Deleted", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("other", "Other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
-	nd_chart("scannerd", name, "sc", "", "AntiSPAM Cache", "percentage", "scannerd", "scannerd.scannerd_sc", ND_CHART_TYPE_STACKED);
+	nd_chart("scannerd", name, "cached", "", "Cached results", "percentage", "scannerd", "scannerd.scannerd_sc", ND_CHART_TYPE_STACKED);
 	nd_dimension("sc_0", "SC:0", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	nd_dimension("sc_1", "SC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
-
-	nd_chart("scannerd", name, "cc", "", "AntiVirus Cache", "percentage", "scannerd", "scannerd.scannerd_cc", ND_CHART_TYPE_STACKED);
 	nd_dimension("cc_0", "CC:0", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	nd_dimension("cc_1", "CC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, 1, ND_VISIBLE);
 	fflush(stdout);
@@ -102,12 +100,9 @@ scanner_print(const char * name, const struct scanner_statistics * data,
 	nd_set("other", data->other);
 	nd_end();
 
-	nd_begin_time("scannerd", name, "sc", time);
+	nd_begin_time("scannerd", name, "cached", time);
 	nd_set("sc_0", data->sc_0);
 	nd_set("sc_1", data->sc_1);
-	nd_end();
-
-	nd_begin_time("scannerd", name, "cc", time);
 	nd_set("cc_0", data->cc_0);
 	nd_set("cc_1", data->cc_1);
 	nd_end();
