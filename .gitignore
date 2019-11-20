@@ -1,5 +1,6 @@
 *.o
 
+parser.plugin
 qmail.plugin
 scanner.plugin
 svstat.plugin
