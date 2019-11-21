@@ -29,6 +29,22 @@ struct dt_stat {
 	uint8_t  want;
 };
 
+enum status {
+	SUCCESS,
+	ERR_CHDIR,
+	ERR_OPEN,
+	ERR_READ,
+};
+
+struct statistics {
+	struct {
+		uint64_t timestamp;
+		int is_up;
+		enum status err;
+	} data;
+	const char * name;
+};
+
 int run;
 
 static
@@ -49,22 +65,24 @@ quit(int unused) {
 	run = 0;
 }
 
-uint64_t
-collect_uptime(const char * dir) {
+void
+collect_uptime(struct statistics * statistics) {
+	const char * dir = statistics->name;
 	unsigned char status[18]; /* See daemontools code */
 	struct dt_stat * stat;
-	uint64_t time;
 	int fd, ret;
 
 	if (chdir(dir) == -1) {
 		fprintf(stderr, "Cannot change directory to '%s': %s\n", dir, strerror(errno));
-		return 0;
+		statistics->data.err = ERR_CHDIR;
+		return;
 	}
 
 	fd = open("supervise/status", O_RDONLY | O_NDELAY);
 	if (fd == -1) {
 		fprintf(stderr, "Cannot open %s/supervise/status: %s\n", dir, strerror(errno));
-		return 0;
+		statistics->data.err = ERR_OPEN;
+		return;
 	}
 
 	ret = read(fd, status, sizeof status);
@@ -72,20 +90,20 @@ collect_uptime(const char * dir) {
 
 	if (ret < sizeof status) {
 		fprintf(stderr, "Cannot read supervise/status\n");
-		return 0;
+		statistics->data.err = ERR_READ;
+		return;
 	}
 
 	stat = (void *)status;
-	time = tai_now() - be64toh(stat->seconds);
-	if (!stat->pid)
-		time *= -1;
-
-	return time;
+	statistics->data.timestamp = be64toh(stat->seconds);
+	statistics->data.is_up = !!stat->pid;
+	statistics->data.err = SUCCESS;
 }
 
 int
 main(int argc, char * argv[]) {
 	struct vector directories = VECTOR_EMPTY;
+	struct statistics statistics;
 	unsigned long last_update;
 	struct timespec timestamp;
 	struct dirent * dir_entry;
@@ -120,7 +138,8 @@ main(int argc, char * argv[]) {
 	signal(SIGTERM, quit);
 	signal(SIGINT, quit);
 
-	vector_init(&directories, sizeof(char *));
+	vector_init(&directories, sizeof statistics);
+	memset(&statistics, 0, sizeof statistics);
 
 	dir = opendir(".");
 	while ((dir_entry = readdir(dir))) {
@@ -130,9 +149,9 @@ main(int argc, char * argv[]) {
 			continue;
 
 		if (is_directory(dir_name) == 1) {
-			const char * dup_name = strdup(dir_name);
-			if (dup_name) {
-				vector_add(&directories, &dup_name);
+			statistics.name = strdup(dir_name);
+			if (statistics.name) {
+				vector_add(&directories, &statistics);
 			}
 		}
 	}
@@ -151,31 +170,43 @@ main(int argc, char * argv[]) {
 
 	nd_chart("daemontools", "uptime", NULL, NULL, "Service Uptime", "seconds", "uptime", "daemontools.uptime", ND_CHART_TYPE_LINE);
 	for (int i = 0; i < directories.len; i++) {
-		dir_name = *(char **)vector_item(&directories, i);
-		nd_dimension(dir_name, dir_name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+		struct statistics * st = vector_item(&directories, i);
+		nd_dimension(st->name, st->name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	}
 	fflush(stdout);
 
 	clock_gettime(CLOCK_REALTIME, &timestamp);
 
 	for (run = 1; run;) {
-		last_update = update_timestamp(&timestamp);
-		nd_begin_time("daemontools", "uptime", NULL, last_update);
+		/* Collect statistics */
 		for (int i = 0; i < directories.len; i++) {
-			dir_name = *(char **)vector_item(&directories, i);
-			nd_set(dir_name, collect_uptime(dir_name));
+			struct statistics * st = vector_item(&directories, i);
+			memset(&st->data, 0, sizeof st->data);
+			collect_uptime(st);
 			if (fchdir(dir_fd) == -1) {
 				fprintf(stderr, "Cannot change directory back to '%s': %s\n", path, strerror(errno));
 				break;
 			}
 		}
+
+		/* Present statistics */
+		last_update = update_timestamp(&timestamp);
+		time_t now = tai_now();
+		nd_begin_time("daemontools", "uptime", NULL, last_update);
+		for (int i = 0; i < directories.len; i++) {
+			struct statistics * st = vector_item(&directories, i);
+			if (st->data.err == SUCCESS) {
+				nd_set(st->name, now - st->data.timestamp);
+			}
+		}
 		nd_end();
 		fflush(stdout);
+
 		sleep(timeout);
 	}
 	close(dir_fd);
 	for (int i = 0; i < directories.len; i++) {
-		free(*(char **)vector_item(&directories, i));
+		free((void *)((struct statistics *)vector_item(&directories, i))->name);
 	}
 	vector_free(&directories);
 	return 0;
