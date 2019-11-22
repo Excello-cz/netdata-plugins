@@ -168,7 +168,19 @@ main(int argc, char * argv[]) {
 		exit(1);
 	}
 
-	nd_chart("daemontools", "uptime", NULL, NULL, "Service Uptime", "seconds", "uptime", "daemontools.uptime", ND_CHART_TYPE_LINE);
+	nd_chart("daemontools", "uptime", NULL, NULL, "Service Uptime", "seconds", "daemontools", "daemontools.uptime", ND_CHART_TYPE_LINE);
+	for (int i = 0; i < directories.len; i++) {
+		struct statistics * st = vector_item(&directories, i);
+		nd_dimension(st->name, st->name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	}
+
+	nd_chart("daemontools", "downtime", NULL, NULL, "Service Downtime", "seconds", "daemontools", "daemontools.downtime", ND_CHART_TYPE_LINE);
+	for (int i = 0; i < directories.len; i++) {
+		struct statistics * st = vector_item(&directories, i);
+		nd_dimension(st->name, st->name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	}
+
+	nd_chart("daemontools", "up_down", NULL, NULL, "Service Up/Down", "up/down", "daemontools", "daemontools.up_down", ND_CHART_TYPE_LINE);
 	for (int i = 0; i < directories.len; i++) {
 		struct statistics * st = vector_item(&directories, i);
 		nd_dimension(st->name, st->name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -192,14 +204,34 @@ main(int argc, char * argv[]) {
 		/* Present statistics */
 		last_update = update_timestamp(&timestamp);
 		time_t now = tai_now();
+
 		nd_begin_time("daemontools", "uptime", NULL, last_update);
 		for (int i = 0; i < directories.len; i++) {
 			struct statistics * st = vector_item(&directories, i);
-			if (st->data.err == SUCCESS) {
+			if (st->data.err == SUCCESS && st->data.is_up) {
 				nd_set(st->name, now - st->data.timestamp);
 			}
 		}
 		nd_end();
+
+		nd_begin_time("daemontools", "downtime", NULL, last_update);
+		for (int i = 0; i < directories.len; i++) {
+			struct statistics * st = vector_item(&directories, i);
+			if (st->data.err == SUCCESS) {
+				nd_set(st->name, !st->data.is_up ? now - st->data.timestamp : 0);
+			}
+		}
+		nd_end();
+
+		nd_begin_time("daemontools", "up_down", NULL, last_update);
+		for (int i = 0; i < directories.len; i++) {
+			struct statistics * st = vector_item(&directories, i);
+			if (st->data.err == SUCCESS) {
+				nd_set(st->name, st->data.is_up);
+			}
+		}
+		nd_end();
+
 		fflush(stdout);
 
 		sleep(timeout);
