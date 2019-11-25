@@ -13,7 +13,6 @@
  * this constant and set the DIMENSION divider to the same value if we need
  * fractional values.	*/
 #define FRACTIONAL_CONVERSION 1000000
-#define	BUF_LEN 1024
 
 struct scanner_statistics {
 	int clear;
@@ -75,36 +74,43 @@ scanner_clear(struct scanner_statistics * data) {
 	memset(data, 0, sizeof * data);
 }
 
-int get_next_field(char * buf, const char ** line) {
-	int buf_i = 0;
-	// skip the previous tab
-	(*line)++;
-	while (**line != '\t') {
-		if (**line == '\0' || **line == '\n') return 0;
-		buf[buf_i] = **line;
-		(*line)++;
-		buf_i++;
-		if (buf_i == BUF_LEN) return 0;
+static
+const char *
+get_next_field(char * restrict buf, size_t size, const char * restrict line) {
+	const char * s = line;
+	char * d = buf;
+
+	for (; *s && *s != '\t' && d - buf < size; d++, s++) {
+		*d = *s;
 	}
-	buf[buf_i] = '\0';
-	return buf_i;
+
+	if (d - buf >= size) {
+		return NULL;
+	}
+
+	*d = '\0';
+
+	return s;
 }
 
 static
 void
 scanner_process(const char * line, struct scanner_statistics * data) {
-	char buf[BUF_LEN];
 	int sc_stat = -1;
 	int cc_stat = -1;
+	char buf[256];
 
 	/* Skip date */
-	while (*line != '\t') {
-		if (*line == '\0' || *line == '\n') return;
-		line++;
+	if ((line = get_next_field(buf, sizeof buf, line)) == NULL) {
+		fprintf(stderr, "scanner.plugin: cannot skip date\n");
+		return;
 	}
 
 	/* Load scan status */
-	if (! get_next_field(buf, &line)) return;
+	if ((line = get_next_field(buf, sizeof buf, line + 1)) == NULL) {
+		fprintf(stderr, "scanner.plugin: cannot get status\n");
+		return;
+	}
 
 	if (strstr(buf, "Clear")) {
 		data->clear++;
@@ -137,7 +143,10 @@ scanner_process(const char * line, struct scanner_statistics * data) {
 	}
 
 	/* Load time */
-	if (! get_next_field(buf, &line)) return;
+	if ((line = get_next_field(buf, sizeof buf, line + 1)) == NULL) {
+		fprintf(stderr, "scanner.plugin: cannot get processing time\n");
+		return;
+	}
 
 	int duration = atof(buf) * FRACTIONAL_CONVERSION;
 	if (sc_stat == -1 && cc_stat == -1) {
