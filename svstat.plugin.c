@@ -24,9 +24,9 @@
 struct dt_stat {
 	uint64_t seconds;
 	uint32_t nano;
-	uint32_t pid;
-	uint8_t  paused;
-	uint8_t  want;
+	uint32_t pid;    /* pid == 0 if the service is down */
+	uint8_t  paused; /* boolean value if the service is paused */
+	uint8_t  want;   /* it holds 'u' or 'd' if the service wants up or down respectively */
 };
 
 enum status {
@@ -40,6 +40,7 @@ struct statistics {
 	struct {
 		uint64_t timestamp;
 		int is_up;
+		char want;
 		enum status err;
 	} data;
 	const char * name;
@@ -97,6 +98,7 @@ collect_uptime(struct statistics * statistics) {
 	stat = (void *)status;
 	statistics->data.timestamp = be64toh(stat->seconds);
 	statistics->data.is_up = !!stat->pid;
+	statistics->data.want = stat->want;
 	statistics->data.err = SUCCESS;
 }
 
