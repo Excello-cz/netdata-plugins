@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-PREFIX ?= /usr
+PREFIX  ?= /usr
+LIB_DIR ?= lib
+
 PLUGIN_DIR = ${DESTDIR}${PREFIX}/libexec/netdata/plugins.d
+CONF_DIR   = ${DESTDIR}${PREFIX}/${LIB_DIR}/netdata/conf.d
+HEALTH_DIR = ${CONF_DIR}/health.d
 
 VERSION = 0.5.0
 
@@ -52,6 +56,8 @@ install: all
 	@echo installing executables to $(PLUGIN_DIR)
 	install -d $(PLUGIN_DIR)
 	install $(BIN) $(PLUGIN_DIR)
+	install -d $(HEALTH_DIR)
+	install health.d/* $(HEALTH_DIR)
 
 .PHONY: clean
 clean:
