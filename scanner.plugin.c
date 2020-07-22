@@ -186,7 +186,11 @@ main(int argc, const char * argv[]) {
 						watch->func->postprocess(watch->data);
 
 					last_update = update_timestamp(&watch->time);
-					watch->func->print(watch->dir_name, watch->data, last_update);
+					if (watch->func->print(watch->dir_name, watch->data, last_update)) {
+						run = 0;
+						fprintf(stderr, "Cannot write to stdout: %s\n", strerror(errno));
+						break;
+					}
 					watch->func->clear(watch->data);
 				}
 			}

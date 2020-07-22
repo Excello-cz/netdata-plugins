@@ -96,7 +96,7 @@ process_smtp(const char * line, struct statistics * data) {
 }
 
 static
-void
+int
 print_smtp_header(const char * name) {
 	char title[BUFSIZ];
 
@@ -134,11 +134,11 @@ print_smtp_header(const char * name) {
 	nd_dimension("tls1.3",	 "TLS_1.3",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("unknown",	 "unknown",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
-void
+int
 print_smtp_data(const char * name, const struct statistics * data, const unsigned long time) {
 	nd_begin_time("qmail", name, "", time);
 	nd_set("tcp_ok", data->tcp_ok);
@@ -169,7 +169,7 @@ print_smtp_data(const char * name, const struct statistics * data, const unsigne
 	nd_set("unknown", data->esmtps_unknown);
 	nd_end();
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
@@ -193,7 +193,7 @@ struct stat_func smtp = {
 	.fini = &free,
 
 	.print_hdr   = &print_smtp_header,
-	.print       = (void (*)(const char *, const void *, unsigned long))&print_smtp_data,
+	.print       = (int (*)(const char *, const void *, unsigned long))&print_smtp_data,
 	.process     = (void (*)(const char *, void *))&process_smtp,
 	.postprocess = (void (*)(void *))&postprocess_data,
 	.clear       = (void (*)(void *))&clear_smtp_data,

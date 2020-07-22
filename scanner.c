@@ -188,7 +188,7 @@ scanner_process(const char * line, struct scanner_statistics * data) {
 }
 
 static
-void
+int
 scanner_print_hdr(const char * name) {
 	nd_chart("scannerd", name, "type", "", "", "volume", "scannerd", "scannerd.scannerd_type", ND_CHART_TYPE_STACKED);
 	nd_dimension("clear", "Clear", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -226,11 +226,11 @@ scanner_print_hdr(const char * name) {
 	nd_dimension("scan_duration_sc_1", "SC:1", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, FRACTIONAL_CONVERSION, ND_VISIBLE);
 	nd_dimension("scan_duration__", "__", ND_ALG_PERCENTAGE_OF_ABSOLUTE_ROW, 1, FRACTIONAL_CONVERSION, ND_VISIBLE);
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
-void
+int
 scanner_print(const char * name, const struct scanner_statistics * data,
 		const unsigned long time) {
 	nd_begin_time("scannerd", name, "type", time);
@@ -273,7 +273,7 @@ scanner_print(const char * name, const struct scanner_statistics * data,
 	nd_set("scan_duration__", data->scan_duration__);
 	nd_end();
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
@@ -314,7 +314,7 @@ struct stat_func scanner = {
 	.fini = &free,
 
 	.print_hdr   = scanner_print_hdr,
-	.print       = (void (*)(const char *, const void *, unsigned long))scanner_print,
+	.print       = (int (*)(const char *, const void *, unsigned long))scanner_print,
 	.process     = (void (*)(const char *, void *))scanner_process,
 	.postprocess = (void (*)(void *))&postprocess_data,
 	.clear       = (void (*)(void *))&scanner_clear,

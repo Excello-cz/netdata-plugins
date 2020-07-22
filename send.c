@@ -33,7 +33,7 @@ clear_send_statistics(struct send_statistics * data) {
 }
 
 static
-void
+int
 print_send_hdr(const char * name) {
 	char title[BUFSIZ];
 
@@ -49,11 +49,11 @@ print_send_hdr(const char * name) {
 	nd_dimension("delivery_failure",  "Failure", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("delivery_deferral", "Deferral", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
-void
+int
 print_send_data(const char * name, const struct send_statistics * data, const unsigned long time) {
 	nd_begin_time("qmail", name, "", time);
 	nd_set("start_delivery", data->start_delivery);
@@ -66,7 +66,7 @@ print_send_data(const char * name, const struct send_statistics * data, const un
 	nd_set("delivery_deferral", data->delivery_deferral);
 	nd_end();
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
@@ -95,7 +95,7 @@ struct stat_func send = {
 	.fini = &free,
 
 	.print_hdr   = &print_send_hdr,
-	.print       = (void (*)(const char *, const void *, unsigned long))&print_send_data,
+	.print       = (int (*)(const char *, const void *, unsigned long))&print_send_data,
 	.process     = (void (*)(const char *, void *))&process_send_log_line,
 	.postprocess = NULL,
 	.clear       = (void (*)(void *))&clear_send_statistics,

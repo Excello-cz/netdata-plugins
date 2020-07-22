@@ -38,24 +38,24 @@ queue_data_init() {
 }
 
 static
-void
+int
 print_queue_hdr(const char * name) {
 	nd_chart("qmail", "queue", NULL, NULL, NULL, NULL, NULL, "qmail.queue", ND_CHART_TYPE_AREA);
 	nd_dimension("mess", NULL, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("todo", NULL, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
-void
+int
 print_queue_data(const char * name, const struct queue_statistics * data, const unsigned long time) {
 	nd_begin_time("qmail", "queue", NULL, time);
 	nd_set("mess", data->mess);
 	nd_set("todo", data->todo);
 	nd_end();
 
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
@@ -115,7 +115,7 @@ struct stat_func queue = {
 	.fini = &free,
 
 	.print_hdr   = &print_queue_hdr,
-	.print       = (void (*)(const char *, const void *, unsigned long))&print_queue_data,
+	.print       = (int (*)(const char *, const void *, unsigned long))&print_queue_data,
 	.process     = (void (*)(const char *, void *))&measure_queue,
 	.postprocess = NULL,
 	.clear       = (void (*)(void *))&clear_data,

@@ -234,7 +234,10 @@ main(int argc, char * argv[]) {
 		}
 		nd_end();
 
-		fflush(stdout);
+		if (fflush(stdout) == EOF) {
+			fprintf(stderr, "Cannot write to stdout: %s\n", strerror(errno));
+			break;
+		}
 
 		sleep(timeout);
 	}

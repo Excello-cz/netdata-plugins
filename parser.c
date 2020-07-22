@@ -68,7 +68,7 @@ parser_process(const char * line, struct parser_statistics * data) {
 }
 
 static
-void
+int
 parser_print_hdr(const char * name) {
 	nd_chart("parser", name, "table_updates", "", "Table updates by parser", "update", "parser", "parser.table_updates", ND_CHART_TYPE_STACKED);
   nd_dimension("conn_failed", "conn_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -79,11 +79,11 @@ parser_print_hdr(const char * name) {
   nd_dimension("unknown_success", "unknown_success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
   nd_dimension("unknown_failed", "unknown_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
   nd_dimension("other", "other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-	fflush(stdout);
+	return fflush(stdout);
 }
 
 static
-void
+int
 parser_print(const char * name, const struct parser_statistics * data,
 		const unsigned long time) {
 	nd_begin_time("parser", name, "table_updates", time);
@@ -97,7 +97,7 @@ parser_print(const char * name, const struct parser_statistics * data,
 	nd_set("other", data->other);
 	nd_end();
 
-  fflush(stdout);
+  return fflush(stdout);
 }
 
 static
@@ -106,7 +106,7 @@ struct stat_func parser = {
 	.fini = &free,
 
 	.print_hdr = parser_print_hdr,
-	.print = (void (*)(const char *, const void *, unsigned long))parser_print,
+	.print = (int (*)(const char *, const void *, unsigned long))parser_print,
 	.process = (void (*)(const char *, void *))parser_process,
 	.postprocess = NULL,
 	.clear = (void (*)(void *))&parser_clear,
