@@ -71,14 +71,14 @@ static
 int
 parser_print_hdr(const char * name) {
 	nd_chart("parser", name, "table_updates", "", "Table updates by parser", "update", "parser", "parser.table_updates", ND_CHART_TYPE_STACKED);
-  nd_dimension("conn_failed", "conn_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-  nd_dimension("scanner_success", "scanner_success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-  nd_dimension("scanner_failed", "scanner_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-  nd_dimension("delivery_success", "delivery_success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-  nd_dimension("delivery_failed", "delivery_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-  nd_dimension("unknown_success", "unknown_success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-  nd_dimension("unknown_failed", "unknown_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-  nd_dimension("other", "other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("conn_failed", "conn_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("scanner_success", "scanner_success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("scanner_failed", "scanner_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("delivery_success", "delivery_success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("delivery_failed", "delivery_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("unknown_success", "unknown_success", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("unknown_failed", "unknown_failed", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("other", "other", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	return fflush(stdout);
 }
 
@@ -97,7 +97,7 @@ parser_print(const char * name, const struct parser_statistics * data,
 	nd_set("other", data->other);
 	nd_end();
 
-  return fflush(stdout);
+	return fflush(stdout);
 }
 
 static
