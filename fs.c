@@ -45,49 +45,39 @@ enum nd_err
 read_log_file(struct fs_watch * watch) {
 	ssize_t  max_line_length;
 	const char * line;
-	char buf[BUFSIZ];
-	ssize_t buffered;
 	ssize_t ret;
 	char * end;
-
-	enum skip {
-		DO_NOT_SKIP,
-		SKIP_THE_REST
-	} skip;
 
 	if (watch->fd == -1)
 		return ND_FILE;
 
-	buffered = 0;
-	skip = DO_NOT_SKIP;
-
-	while ((ret = read(watch->fd, buf + buffered, sizeof buf - buffered)) > 0) {
-		line = buf;
-		ret += buffered;
-		buffered = 0;
+	while ((ret = read(watch->fd, watch->buf + watch->buffered, sizeof watch->buf - watch->buffered)) > 0) {
+		line = watch->buf;
+		ret += watch->buffered;
+		watch->buffered = 0;
 		for (;;) {
-			max_line_length = ret - (line - buf);
+			max_line_length = ret - (line - watch->buf);
 			end = memchr(line, '\n', max_line_length);
 			if (end) {
 				*end = '\0';
 
-				if (skip == DO_NOT_SKIP)
+				if (watch->skip == DO_NOT_SKIP)
 					watch->func->process(line, watch->data);
 				else
-					skip = DO_NOT_SKIP;
+					watch->skip = DO_NOT_SKIP;
 
 				line = end + 1;
 			} else {
-				if (max_line_length > 0 && max_line_length < BUFSIZ) {
-					buffered = max_line_length;
-					memmove(buf, line, buffered);
-				} else if (max_line_length == BUFSIZ) {
-					buf[BUFSIZ - 1] = '\0';
+				if (max_line_length > 0 && max_line_length < sizeof watch->buf) {
+					watch->buffered = max_line_length;
+					memmove(watch->buf, line, watch->buffered);
+				} else if (max_line_length == sizeof watch->buf) {
+					watch->buf[sizeof watch->buf - 1] = '\0';
 
-					if (skip == DO_NOT_SKIP)
+					if (watch->skip == DO_NOT_SKIP)
 						watch->func->process(line, watch->data);
 
-					skip = SKIP_THE_REST;
+					watch->skip = SKIP_THE_REST;
 				}
 				break;
 			}

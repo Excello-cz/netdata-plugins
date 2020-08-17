@@ -5,11 +5,19 @@ enum watch_type {
 	WATCH_QUEUE,
 };
 
+enum skip {
+	DO_NOT_SKIP = 0,
+	SKIP_THE_REST
+};
+
 struct fs_watch {
 	const char * dir_name;
 	const char * file_name;
 	int watch_dir;
 	int fd;
+	char buf[BUFSIZ];
+	ssize_t buffered;
+	enum skip skip;
 	struct timespec time;
 	void * data;
 	const struct stat_func * func;
