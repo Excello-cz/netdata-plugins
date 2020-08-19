@@ -34,6 +34,13 @@ struct statistics {
 	int esmtps_tls_1_2;
 	int esmtps_tls_1_3;
 	int esmtps_unknown;
+
+	int queue_err_conn_timeout;
+	int queue_err_comm_failed;
+	int queue_err_perm_reject;
+	int queue_err_refused;
+	int queue_err_unprocess;
+	int queue_err_unknown;
 };
 
 static
@@ -92,6 +99,20 @@ process_smtp(const char * line, struct statistics * data) {
 		}
 	} else if ((ptr = strstr(line, "uses SMTP"))) {
 		data->smtp++;
+	} else if ((ptr = strstr(line, "qmail-smtpd: qmail-queue error message: "))) {
+		if (strstr(ptr, "451 tcp connection to mail server timed out")) {
+			data->queue_err_conn_timeout++;
+		} else if (strstr(ptr, "451 unable to process message")) {
+			data->queue_err_unprocess++;
+		} else if (strstr(ptr, "451 tcp connection to mail server succeeded, but communication failed")) {
+			data->queue_err_comm_failed++;
+		} else if (strstr(ptr, "554 mail server permanently rejected message")) {
+			data->queue_err_perm_reject++;
+		} else if (strstr(ptr, "554 message refused")) {
+			data->queue_err_refused++;
+		} else {
+			data->queue_err_unknown++;
+		}
 	}
 }
 
@@ -134,6 +155,16 @@ print_smtp_header(const char * name) {
 	nd_dimension("tls1.3",	 "TLS_1.3",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("unknown",	 "unknown",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 
+	sprintf(title, "Qmail SMTPD qmail-queue error messages for %s", name);
+	nd_chart("qmail", name, "queue_err", "", title, "# queue errors",
+		"smtpd", "qmail.qmail_smtpd_queue_err", ND_CHART_TYPE_LINE);
+	nd_dimension("conn_timeout",	 "conn_timeout",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("comm_failed",	 "comm_failed",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("unprocess",	 "unprocess",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("perm_reject",	 "perm_reject",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("refused",	 "refused",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("unknown",	 "unknown",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+
 	return fflush(stdout);
 }
 
@@ -167,6 +198,15 @@ print_smtp_data(const char * name, const struct statistics * data, const unsigne
 	nd_set("tls1.2", data->esmtps_tls_1_2);
 	nd_set("tls1.3", data->esmtps_tls_1_3);
 	nd_set("unknown", data->esmtps_unknown);
+	nd_end();
+
+	nd_begin_time("qmail", name, "queue_err", time);
+	nd_set("conn_timeout", data->queue_err_conn_timeout);
+	nd_set("comm_failed", data->queue_err_comm_failed);
+	nd_set("perm_reject", data->queue_err_perm_reject);
+	nd_set("refused", data->queue_err_refused);
+	nd_set("unprocess", data->queue_err_unprocess);
+	nd_set("unknown", data->queue_err_unknown);
 	nd_end();
 
 	return fflush(stdout);
