@@ -41,6 +41,10 @@ struct statistics {
 	int queue_err_refused;
 	int queue_err_unprocess;
 	int queue_err_unknown;
+
+	int ratelimitspp_conn_timeout;
+	int ratelimitspp_error;
+	int ratelimitspp_ratelimited;
 };
 
 static
@@ -114,6 +118,19 @@ process_smtp(const char * line, struct statistics * data) {
 			data->queue_err_unknown++;
 		}
 	}
+        else if ((ptr = strstr(line, "ratelimitspp:"))) {
+                if (ptr = strstr(ptr, "Error:")) {
+                        if (strstr(ptr, "Receiving data failed, connection timed out.")) {
+                                data->ratelimitspp_conn_timeout++;
+                        }
+                        else {
+                                data->ratelimitspp_error++;
+                        }
+                }
+                else {
+                        if (strstr(ptr, ";Result:NOK"))
+                                data->ratelimitspp_ratelimited++;
+                }
 }
 
 static
