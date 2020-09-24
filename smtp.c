@@ -98,6 +98,7 @@ process_smtp(const char * line, struct smtp_statistics * data) {
                         if (strstr(ptr, ";Result:NOK"))
                                 data->ratelimitspp_ratelimited++;
                 }
+	}
 }
 
 static
