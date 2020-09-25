@@ -26,6 +26,7 @@ static
 void
 process_smtp(const char * line, struct smtp_statistics * data) {
 	char * ptr;
+	char * ptr_;
 	int val;
 
 	if (strstr(line, "tcpserver: ok")) {
@@ -86,17 +87,16 @@ process_smtp(const char * line, struct smtp_statistics * data) {
 		}
 	}
         else if ((ptr = strstr(line, "ratelimitspp:"))) {
-                if (ptr = strstr(ptr, "Error:")) {
-                        if (strstr(ptr, "Receiving data failed, connection timed out.")) {
+                if ((ptr_ = strstr(ptr, "Error:"))) {
+                        if (strstr(ptr_, "Receiving data failed, connection timed out.")) {
                                 data->ratelimitspp_conn_timeout++;
                         }
                         else {
                                 data->ratelimitspp_error++;
                         }
                 }
-                else {
-                        if (strstr(ptr, ";Result:NOK"))
-                                data->ratelimitspp_ratelimited++;
+                else if (strstr(ptr, ";Result:NOK")) {
+                        data->ratelimitspp_ratelimited++;
                 }
 	}
 }
