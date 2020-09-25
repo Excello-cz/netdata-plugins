@@ -9,3 +9,13 @@ struct stat_func {
 	void (*process)      (const char *, void *);
 	void (*postprocess)  (void *);
 };
+
+struct aggreg_func {
+	void * (*init)       ();
+	void (*fini)         (void *);
+	int  (*print_hdr)    ();
+	void (*clear)        (void *);
+	int  (*print)        (const void *, unsigned long);
+	void (*aggregate)    (void *, const void *);
+	void (*postprocess)  (void *);
+};
