@@ -250,8 +250,8 @@ main(int argc, const char * argv[]) {
 					else if (watch->type == WATCH_QUEUE)
 						watch->func->process(NULL, watch->data);
 
-					for (i = 0; i < vector_aggregators.len; i++) {
-						aggregator = vector_item(&vector_aggregators, i);
+					for (int va_i = 0; va_i < vector_aggregators.len; va_i++) {
+						aggregator = vector_item(&vector_aggregators, va_i);
 						if (aggregator->type == watch->type) {
 							aggregator->func->aggregate(aggregator->data, watch->data);
 						}
