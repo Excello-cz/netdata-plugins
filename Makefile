@@ -30,12 +30,12 @@ HEADERS_COMMON = fs.h err.h timer.h vector.h
 all: $(BIN)
 
 ## Dependencies
-qmail.plugin: qmail.plugin.o $(OBJS_COMMON) queue.o send.o smtp.o
+qmail.plugin: qmail.plugin.o $(OBJS_COMMON) queue.o send.o smtp.o ratelimitspp.o
 scanner.plugin: scanner.plugin.o $(OBJS_COMMON) scanner.o
 svstat.plugin: fs.o netdata.o timer.o vector.o
 parser.plugin: parser.plugin.o $(OBJS_COMMON) parser.o
 
-qmail.plugin.o: $(HEADERS_COMMON) flush.h signal.h queue.h send.h smtp.h
+qmail.plugin.o: $(HEADERS_COMMON) flush.h signal.h queue.h send.h smtp.h ratelimitspp.h
 scanner.plugin.o: $(HEADERS_COMMON) flush.h signal.h scanner.h
 svstat.plugin.o: $(HEADERS_COMMON) netdata.h
 parser.plugin.o: flush.h fs.h signal.h timer.h vector.h
@@ -50,6 +50,7 @@ smtp.o: smtp.c smtp.h callbacks.h netdata.h
 timer.o: timer.c timer.h
 vector.o: vector.c vector.h err.h
 parser.o: parser.c parser.h
+ratelimitspp.o: ratelimitspp.c ratelimitspp.h smtp.h
 
 .PHONY: install
 install: all
