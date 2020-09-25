@@ -3,7 +3,6 @@
 enum watch_type {
 	WATCH_LOG_FILE,
 	WATCH_QUEUE,
-	WATCH_AGGREGATOR,
 };
 
 enum skip {
