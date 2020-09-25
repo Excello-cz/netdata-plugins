@@ -13,9 +13,9 @@ enum skip {
 struct fs_watch_aggregator {
 	struct timespec time;
 	void * data;
-	const struct stat_func * func;
+	const struct aggreg_func * func;
 	enum watch_type type;
-}
+};
 
 struct fs_watch {
 	const char * dir_name;
