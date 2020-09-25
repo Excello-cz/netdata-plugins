@@ -11,9 +11,9 @@
 #include "smtp.h"
 
 struct ratelimitspp_statistics {
-        int conn_timeout;
-        int error;
-        int ratelimited;
+	int conn_timeout;
+	int error;
+	int ratelimited;
 };
 
 static

@@ -86,18 +86,18 @@ process_smtp(const char * line, struct smtp_statistics * data) {
 			data->queue_err_unknown++;
 		}
 	}
-        else if ((ptr = strstr(line, "ratelimitspp:"))) {
-                if ((ptr_ = strstr(ptr, "Error:"))) {
-                        if (strstr(ptr_, "Receiving data failed, connection timed out.")) {
-                                data->ratelimitspp_conn_timeout++;
-                        }
-                        else {
-                                data->ratelimitspp_error++;
-                        }
-                }
-                else if (strstr(ptr, ";Result:NOK")) {
-                        data->ratelimitspp_ratelimited++;
-                }
+	else if ((ptr = strstr(line, "ratelimitspp:"))) {
+		if ((ptr_ = strstr(ptr, "Error:"))) {
+			if (strstr(ptr_, "Receiving data failed, connection timed out.")) {
+				data->ratelimitspp_conn_timeout++;
+			}
+			else {
+				data->ratelimitspp_error++;
+			}
+		}
+		else if (strstr(ptr, ";Result:NOK")) {
+			data->ratelimitspp_ratelimited++;
+		}
 	}
 }
 
