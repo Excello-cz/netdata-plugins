@@ -24,6 +24,7 @@
 #include "queue.h"
 #include "send.h"
 #include "smtp.h"
+#include "ratelimitspp.h"
 
 #define DEFAULT_PATH "/var/log/qmail"
 
@@ -133,18 +134,18 @@ detect_log_dirs(const int fd, struct vector * v) {
 static
 enum nd_err
 append_ratelimit_aggregator(struct vector * v) {
-	struct fs_watch_aggregator watch;
+	struct fs_watch_aggregator aggregator;
 
-	memset(&watch, 0, sizeof watch);
-	watch.type = WATCH_AGGREGATOR;
-	watch.func = ratelimitspp_func;
-	watch.data = watch.func->init();
+	memset(&aggregator, 0, sizeof aggregator);
+	aggregator.type = WATCH_LOG_FILE;
+	aggregator.func = ratelimitspp_func;
+	aggregator.data = aggregator.func->init();
 
-	if (watch.data == NULL) {
+	if (aggregator.data == NULL) {
 		return ND_ALLOC;
 	}
 
-	vector_add(v, &watch);
+	vector_add(v, &aggregator);
 
 	return ND_SUCCESS;
 }
@@ -153,8 +154,10 @@ int
 main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
 	struct vector vector_watchers = VECTOR_EMPTY;
+	struct vector vector_aggregators = VECTOR_EMPTY;
 	unsigned long last_update;
 	struct fs_watch * watch;
+	struct fs_watch_aggregator * aggregator;
 	const char * argv0;
 	const char * path;
 	int timeout = 1;
@@ -184,6 +187,7 @@ main(int argc, const char * argv[]) {
 	}
 
 	vector_init(&vector_watchers, sizeof * watch);
+	vector_init(&vector_aggregators, sizeof * aggregator);
 
 	timer_fd = prepare_timer_fd(timeout);
 	pfd[POLL_TIMER].fd = timer_fd;
@@ -205,10 +209,18 @@ main(int argc, const char * argv[]) {
 		exit(1);
 	}
 
+	append_ratelimit_aggregator(&vector_aggregators);
+
 	for (i = 0; i < vector_watchers.len; i++) {
 		watch = vector_item(&vector_watchers, i);
 		watch->func->print_hdr(watch->dir_name);
 		clock_gettime(CLOCK_REALTIME, &watch->time);
+	}
+
+	for (i = 0; i < vector_aggregators.len; i++) {
+		aggregator = vector_item(&vector_aggregators, i);
+		aggregator->func->print_hdr();
+		clock_gettime(CLOCK_REALTIME, &aggregator->time);
 	}
 
 	for (run = 1; run;) {
@@ -238,6 +250,13 @@ main(int argc, const char * argv[]) {
 					else if (watch->type == WATCH_QUEUE)
 						watch->func->process(NULL, watch->data);
 
+					for (i = 0; i < vector_aggregators.len; i++) {
+						aggregator = vector_item(&vector_aggregators, i);
+						if (aggregator->type == watch->type) {
+							aggregator->func->aggregate(aggregator->data, watch->data);
+						}
+					}
+
 					if (watch->func->postprocess)
 						watch->func->postprocess(watch->data);
 
@@ -249,6 +268,19 @@ main(int argc, const char * argv[]) {
 					}
 					watch->func->clear(watch->data);
 				}
+				for (i = 0; i < vector_aggregators.len; i++) {
+					aggregator = vector_item(&vector_aggregators, i);
+					if (aggregator->func->postprocess)
+						aggregator->func->postprocess(aggregator->data);
+
+					last_update = update_timestamp(&aggregator->time);
+                                        if (aggregator->func->print(aggregator->data, last_update)) {
+                                                run = 0;
+                                                fprintf(stderr, "Cannot write to stdout: %s\n", strerror(errno));
+                                                break;
+                                        }
+                                        aggregator->func->clear(aggregator->data);
+				}
 			}
 		}
 	}
@@ -259,6 +291,11 @@ main(int argc, const char * argv[]) {
 		watch->func->fini(watch->data);
 		close(watch->fd);
 	}
+        for (i = 0; i < vector_aggregators.len; i++) {
+                aggregator = vector_item(&vector_aggregators, i);
+                aggregator->func->fini(aggregator->data);
+        }
+
 	close(fs_event_fd);
 	close(timer_fd);
 	close(signal_fd);
