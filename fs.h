@@ -3,13 +3,20 @@
 enum watch_type {
 	WATCH_LOG_FILE,
 	WATCH_QUEUE,
-	WATCH_DUMMY,
+	WATCH_AGGREGATOR,
 };
 
 enum skip {
 	DO_NOT_SKIP = 0,
 	SKIP_THE_REST
 };
+
+struct fs_watch_aggregator {
+	struct timespec time;
+	void * data;
+	const struct stat_func * func;
+	enum watch_type type;
+}
 
 struct fs_watch {
 	const char * dir_name;
