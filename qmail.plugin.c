@@ -130,10 +130,29 @@ detect_log_dirs(const int fd, struct vector * v) {
 	closedir(dir);
 }
 
+static
+enum nd_err
+append_ratelimit_aggregator(struct vector * v) {
+	struct fs_watch_aggregator watch;
+
+	memset(&watch, 0, sizeof watch);
+	watch.type = WATCH_AGGREGATOR;
+	watch.func = ratelimitspp_func;
+	watch.data = watch.func->init();
+
+	if (watch.data == NULL) {
+		return ND_ALLOC;
+	}
+
+	vector_add(v, &watch);
+
+	return ND_SUCCESS;
+}
+
 int
 main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
-	struct vector vector = VECTOR_EMPTY;
+	struct vector vector_watchers = VECTOR_EMPTY;
 	unsigned long last_update;
 	struct fs_watch * watch;
 	const char * argv0;
@@ -164,7 +183,7 @@ main(int argc, const char * argv[]) {
 		exit(1);
 	}
 
-	vector_init(&vector, sizeof * watch);
+	vector_init(&vector_watchers, sizeof * watch);
 
 	timer_fd = prepare_timer_fd(timeout);
 	pfd[POLL_TIMER].fd = timer_fd;
@@ -178,16 +197,16 @@ main(int argc, const char * argv[]) {
 	pfd[POLL_FS_EVENT].fd = fs_event_fd;
 	pfd[POLL_FS_EVENT].events = POLLIN;
 
-	detect_log_dirs(fs_event_fd, &vector);
-	append_queue_watcher(&vector);
+	detect_log_dirs(fs_event_fd, &vector_watchers);
+	append_queue_watcher(&vector_watchers);
 
-	if (vector_is_empty(&vector)) {
+	if (vector_is_empty(&vector_watchers)) {
 		fprintf(stderr, "Nothing to log for qmail\n");
 		exit(1);
 	}
 
-	for (i = 0; i < vector.len; i++) {
-		watch = vector_item(&vector, i);
+	for (i = 0; i < vector_watchers.len; i++) {
+		watch = vector_item(&vector_watchers, i);
 		watch->func->print_hdr(watch->dir_name);
 		clock_gettime(CLOCK_REALTIME, &watch->time);
 	}
@@ -207,12 +226,12 @@ main(int argc, const char * argv[]) {
 				continue;
 			}
 			if (pfd[POLL_FS_EVENT].revents & POLLIN) {
-				process_fs_event_queue(fs_event_fd, vector.data, vector.len);
+				process_fs_event_queue(fs_event_fd, vector_watchers.data, vector_watchers.len);
 			}
 			if (pfd[POLL_TIMER].revents & POLLIN) {
 				flush_read_fd(timer_fd);
-				for (i = 0; i < vector.len; i++) {
-					watch = vector_item(&vector, i);
+				for (i = 0; i < vector_watchers.len; i++) {
+					watch = vector_item(&vector_watchers, i);
 
 					if (watch->type == WATCH_LOG_FILE)
 						read_log_file(watch);
@@ -234,8 +253,8 @@ main(int argc, const char * argv[]) {
 		}
 	}
 
-	for (i = 0; i < vector.len; i++) {
-		watch = vector_item(&vector, i);
+	for (i = 0; i < vector_watchers.len; i++) {
+		watch = vector_item(&vector_watchers, i);
 		free((void *)watch->dir_name);
 		watch->func->fini(watch->data);
 		close(watch->fd);
