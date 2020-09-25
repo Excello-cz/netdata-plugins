@@ -40,7 +40,7 @@ ratelimitspp_aggregate(struct ratelimitspp_statistics * data, const struct smtp_
 static
 int
 ratelimitspp_print_hdr() {
-	nd_chart("ratelimitspp", "", "", "", "Table updates by ratelimitspp", "events", "ratelimitspp", "ratelimitspp.events", ND_CHART_TYPE_LINE);
+	nd_chart("qmail", "ratelimitspp", "", "", "Table updates by ratelimitspp", "events", "ratelimitspp", "ratelimitspp.events", ND_CHART_TYPE_LINE);
 	nd_dimension("conn_timeout", "conn_timeout", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("error", "error", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("ratelimited", "ratelimited", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -51,7 +51,7 @@ static
 int
 ratelimitspp_print(const struct ratelimitspp_statistics * data,
 		const unsigned long time) {
-	nd_begin_time("ratelimitspp", "", "table_updates", time);
+	nd_begin_time("qmail", "ratelimitspp", "table_updates", time);
 	nd_set("timeout", data->conn_timeout);
 	nd_set("error", data->error);
 	nd_set("ratelimited", data->ratelimited);
