@@ -31,7 +31,7 @@ ratelimitspp_clear(struct ratelimitspp_statistics * data) {
 }
 
 void
-ratelimitspp_aggregate(const char * line, struct ratelimitspp_statistics * data, const struct smtp_statistics * smtp_stats) {
+ratelimitspp_aggregate(struct ratelimitspp_statistics * data, const struct smtp_statistics * smtp_stats) {
 	data->conn_timeout+= smtp_stats->ratelimitspp_conn_timeout;
 	data->error+= smtp_stats->ratelimitspp_error;
 	data->ratelimited+= smtp_stats->ratelimitspp_ratelimited;
@@ -39,8 +39,8 @@ ratelimitspp_aggregate(const char * line, struct ratelimitspp_statistics * data,
 
 static
 int
-ratelimitspp_print_hdr(const char * name) {
-	nd_chart("ratelimitspp", name, "results", "", "Table updates by ratelimitspp", "update", "ratelimitspp", "ratelimitspp.table_updates", ND_CHART_TYPE_STACKED);
+ratelimitspp_print_hdr() {
+	nd_chart("ratelimitspp", "", "", "", "Table updates by ratelimitspp", "events", "ratelimitspp", "ratelimitspp.events", ND_CHART_TYPE_LINE);
 	nd_dimension("conn_timeout", "conn_timeout", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("error", "error", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("ratelimited", "ratelimited", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -49,32 +49,27 @@ ratelimitspp_print_hdr(const char * name) {
 
 static
 int
-ratelimitspp_print(const char * name, const struct ratelimitspp_statistics * data,
+ratelimitspp_print(const struct ratelimitspp_statistics * data,
 		const unsigned long time) {
-	nd_begin_time("ratelimitspp", name, "table_updates", time);
-	nd_set("conn_failed", data->conn_failed);
-	nd_set("scanner_success", data->scanner_success);
-	nd_set("scanner_failed", data->scanner_failed);
-	nd_set("delivery_success", data->delivery_success);
-	nd_set("delivery_failed", data->delivery_failed);
-	nd_set("unknown_success", data->unknown_success);
-	nd_set("unknown_failed", data->unknown_failed);
-	nd_set("other", data->other);
+	nd_begin_time("ratelimitspp", "", "table_updates", time);
+	nd_set("timeout", data->conn_timeout);
+	nd_set("error", data->error);
+	nd_set("ratelimited", data->ratelimited);
 	nd_end();
 
 	return fflush(stdout);
 }
 
 static
-struct stat_func ratelimitspp = {
+struct aggreg_func ratelimitspp = {
 	.init = &ratelimitspp_data_init,
 	.fini = &free,
 
 	.print_hdr = ratelimitspp_print_hdr,
-	.print = (int (*)(const char *, const void *, unsigned long))ratelimitspp_print,
-	.process = NULL,
+	.print = (int (*)(const void *, unsigned long))ratelimitspp_print,
+	.aggregate = (void (*)(void *, const void *))ratelimitspp_aggregate,
 	.postprocess = NULL,
 	.clear = (void (*)(void *))&ratelimitspp_clear,
 };
 
-struct stat_func * ratelimitspp_func = &ratelimitspp;
+struct aggreg_func * ratelimitspp_func = &ratelimitspp;
