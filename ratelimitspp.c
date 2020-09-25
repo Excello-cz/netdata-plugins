@@ -8,6 +8,7 @@
 #include "callbacks.h"
 
 #include "ratelimitspp.h"
+#include "smtp.h"
 
 struct ratelimitspp_statistics {
         int conn_timeout;
