@@ -14,6 +14,12 @@
  * fractional values.  */
 #define FRACTIONAL_CONVERSION 100
 
+struct ratelimitspp_statistics {
+	int conn_timeout;
+	int error;
+	int ratelimited;
+};
+
 struct smtp_statistics {
 	int tcp_ok;
 	int tcp_deny;
@@ -41,7 +47,13 @@ struct smtp_statistics {
 	int queue_err_refused;
 	int queue_err_unprocess;
 	int queue_err_unknown;
+
+	struct ratelimitspp_statistics ratelimitspp;
 };
+
+static
+struct
+ratelimitspp_statistics aggregated_ratelimtspp;
 
 static
 void *
@@ -112,6 +124,16 @@ process_smtp(const char * line, struct smtp_statistics * data) {
 			data->queue_err_refused++;
 		} else {
 			data->queue_err_unknown++;
+		}
+	} else if ((ptr = strstr(line, "ratelimitspp:"))) {
+		if (strstr(ptr, ";Result:NOK")) {
+			data->ratelimitspp.ratelimited++;
+		} else if ((ptr = strstr(ptr, "Error:"))) {
+			if (strstr(ptr, "Receiving data failed, connection timed out.")) {
+				data->ratelimitspp.conn_timeout++;
+			} else {
+				data->ratelimitspp.error++;
+			}
 		}
 	}
 }
@@ -225,6 +247,10 @@ void
 postprocess_data(struct smtp_statistics * data) {
 	if (data->tcp_status_count)
 		data->tcp_status = data->tcp_status_sum * FRACTIONAL_CONVERSION / data->tcp_status_count;
+
+	aggregated_ratelimtspp.conn_timeout += data->ratelimitspp.conn_timeout;
+	aggregated_ratelimtspp.error += data->ratelimitspp.error;
+	aggregated_ratelimtspp.ratelimited += data->ratelimitspp.ratelimited;
 }
 
 static
@@ -240,3 +266,29 @@ struct stat_func smtp = {
 };
 
 struct stat_func * smtp_func = &smtp;
+
+void
+ratelimitspp_clear() {
+	memset(&aggregated_ratelimtspp, 0, sizeof aggregated_ratelimtspp);
+}
+
+int
+ratelimitspp_print_hdr() {
+	nd_chart("qmail", "ratelimitspp", "events", "", "events of ratelimitspp", "events", "ratelimitspp", "ratelimitspp.events", ND_CHART_TYPE_LINE);
+	nd_dimension("conn_timeout", "conn_timeout", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("error", "error", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+	nd_dimension("ratelimited", "ratelimited", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+
+	return fflush(stdout);
+}
+
+int
+ratelimitspp_print(const unsigned long time) {
+	nd_begin_time("qmail", "ratelimitspp", "events", time);
+	nd_set("conn_timeout", aggregated_ratelimtspp.conn_timeout);
+	nd_set("error", aggregated_ratelimtspp.error);
+	nd_set("ratelimited", aggregated_ratelimtspp.ratelimited);
+	nd_end();
+
+	return fflush(stdout);
+}

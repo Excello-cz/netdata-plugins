@@ -134,6 +134,7 @@ int
 main(int argc, const char * argv[]) {
 	struct pollfd pfd[POLL_LENGTH];
 	struct vector vector = VECTOR_EMPTY;
+	struct timespec ratelimitspp_time;
 	unsigned long last_update;
 	struct fs_watch * watch;
 	const char * argv0;
@@ -192,6 +193,10 @@ main(int argc, const char * argv[]) {
 		clock_gettime(CLOCK_REALTIME, &watch->time);
 	}
 
+	ratelimitspp_clear();
+	ratelimitspp_print_hdr();
+	clock_gettime(CLOCK_REALTIME, &ratelimitspp_time);
+
 	for (run = 1; run;) {
 		switch (poll(pfd, LEN(pfd), -1)) {
 		case -1:
@@ -230,6 +235,14 @@ main(int argc, const char * argv[]) {
 					}
 					watch->func->clear(watch->data);
 				}
+
+				last_update = update_timestamp(&ratelimitspp_time);
+				if (ratelimitspp_print(last_update)) {
+					run = 0;
+					fprintf(stderr, "Cannot write to stdout: %s\n", strerror(errno));
+					break;
+				}
+				ratelimitspp_clear();
 			}
 		}
 	}
