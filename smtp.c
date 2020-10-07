@@ -14,7 +14,7 @@
  * fractional values.  */
 #define FRACTIONAL_CONVERSION 100
 
-struct statistics {
+struct smtp_statistics {
 	int tcp_ok;
 	int tcp_deny;
 	int tcp_status;
@@ -46,14 +46,14 @@ struct statistics {
 static
 void *
 smtp_data_init() {
-	struct statistics * ret;
+	struct smtp_statistics * ret;
 	ret = calloc(1, sizeof * ret);
 	return ret;
 }
 
 static
 void
-process_smtp(const char * line, struct statistics * data) {
+process_smtp(const char * line, struct smtp_statistics * data) {
 	char * ptr;
 	int val;
 
@@ -170,7 +170,7 @@ print_smtp_header(const char * name) {
 
 static
 int
-print_smtp_data(const char * name, const struct statistics * data, const unsigned long time) {
+print_smtp_data(const char * name, const struct smtp_statistics * data, const unsigned long time) {
 	nd_begin_time("qmail", name, "", time);
 	nd_set("tcp_ok", data->tcp_ok);
 	nd_set("tcp_deny", data->tcp_deny);
@@ -214,7 +214,7 @@ print_smtp_data(const char * name, const struct statistics * data, const unsigne
 
 static
 void
-clear_smtp_data(struct statistics * data) {
+clear_smtp_data(struct smtp_statistics * data) {
 	int tmp = data->tcp_status;
 	memset(data, 0, sizeof * data);
 	data->tcp_status = tmp;
@@ -222,7 +222,7 @@ clear_smtp_data(struct statistics * data) {
 
 static
 void
-postprocess_data(struct statistics * data) {
+postprocess_data(struct smtp_statistics * data) {
 	if (data->tcp_status_count)
 		data->tcp_status = data->tcp_status_sum * FRACTIONAL_CONVERSION / data->tcp_status_count;
 }
