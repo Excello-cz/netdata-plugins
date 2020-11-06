@@ -250,7 +250,8 @@ postprocess_data(struct smtp_statistics * data) {
 
 	aggregated_ratelimtspp.conn_timeout += data->ratelimitspp.conn_timeout;
 	aggregated_ratelimtspp.error += data->ratelimitspp.error;
-	aggregated_ratelimtspp.ratelimited += data->ratelimitspp.ratelimited;
+	if (data->ratelimitspp.ratelimited)
+		aggregated_ratelimtspp.ratelimited = 1;
 }
 
 static
