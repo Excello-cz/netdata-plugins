@@ -97,9 +97,9 @@ smtp_data_init() {
 
 static
 void
-set_rulename(char * name_d, const char * name_s) {
-	memset(name_d, 0, sizeof(((struct limit_t *)0)->rulename));
-	for (int i = 0; i < sizeof(((struct limit_t *)0)->rulename); i++) {
+set_rulename(char * name_d, const char * name_s, const size_t size) {
+	memset(name_d, 0, size);
+	for (int i = 0; i < size; i++) {
 		if (!(name_s + i) || name_s[i] == ')') {
 			break;
 		}
@@ -118,7 +118,7 @@ update_limit(struct vector * limits, const char * rulename_p) {
 	struct limit_t * _limit = 0;
 	struct limit_t limit;
 
-	set_rulename(limit.rulename, rulename_p);
+	set_rulename(limit.rulename, rulename_p, sizeof limit.rulename);
 
 	for (int i = 0; i < limits->len; i++) {
 		_limit = vector_item(limits, i);
