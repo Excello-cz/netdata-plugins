@@ -197,6 +197,8 @@ main(int argc, const char * argv[]) {
 	ratelimitspp_print_hdr();
 	clock_gettime(CLOCK_REALTIME, &ratelimitspp_time);
 
+	tcpserverlimits_clear();
+
 	for (run = 1; run;) {
 		switch (poll(pfd, LEN(pfd), -1)) {
 		case -1:
@@ -243,6 +245,13 @@ main(int argc, const char * argv[]) {
 					break;
 				}
 				ratelimitspp_clear();
+
+				if (tcpserverlimits_print(last_update)) {
+					run = 0;
+					fprintf(stderr, "Cannot write to stdout: %s\n", strerror(errno));
+					break;
+				}
+				tcpserverlimits_clear();
 			}
 		}
 	}
