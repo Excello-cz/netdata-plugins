@@ -378,10 +378,10 @@ postprocess_data(struct smtp_statistics * data) {
 	if (data->sss.ratelimitspp.ratelimited)
 		aggregated_ratelimtspp.ratelimited = 1;
 
-        postprocess_limits(&aggregated_limits.maxload, &data->ssv.maxload);
-        postprocess_limits(&aggregated_limits.maxconnip, &data->ssv.maxconnip);
-        postprocess_limits(&aggregated_limits.maxconnnet, &data->ssv.maxconnnet);
-        postprocess_limits(&aggregated_limits.maxconnrule, &data->ssv.maxconnrule);
+	postprocess_limits(&aggregated_limits.maxload, &data->ssv.maxload);
+	postprocess_limits(&aggregated_limits.maxconnip, &data->ssv.maxconnip);
+	postprocess_limits(&aggregated_limits.maxconnnet, &data->ssv.maxconnnet);
+	postprocess_limits(&aggregated_limits.maxconnrule, &data->ssv.maxconnrule);
 }
 
 static
@@ -449,9 +449,9 @@ print_limits(struct vector * limit, const char * limit_name, const unsigned long
 	vector_init(&newdim, sizeof(struct limit_t));
 
 	for (int i = 0; i < limit->len; i++) {
-                l = vector_item(limit, i);
-                if (l->new) {
-                        vector_add(&newdim, l);
+		l = vector_item(limit, i);
+		if (l->new) {
+			vector_add(&newdim, l);
 		}
 	}
 
