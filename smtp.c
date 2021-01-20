@@ -6,6 +6,8 @@
 
 #include "callbacks.h"
 #include "netdata.h"
+#include "err.h"
+#include "vector.h"
 
 #include "smtp.h"
 
@@ -20,7 +22,13 @@ struct ratelimitspp_statistics {
 	int ratelimited;
 };
 
-struct smtp_statistics {
+struct limit_t {
+	int count;
+	char rulename[256];
+	int new;
+};
+
+struct smtp_statistics_scalar {
 	int tcp_ok;
 	int tcp_deny;
 	int tcp_status;
@@ -51,16 +59,80 @@ struct smtp_statistics {
 	struct ratelimitspp_statistics ratelimitspp;
 };
 
+struct smtp_statistics_vector {
+	struct vector maxconnnet;
+	struct vector maxconnip;
+	struct vector maxconnrule;
+	struct vector maxload;
+};
+
+struct smtp_statistics {
+	struct smtp_statistics_vector ssv;
+	struct smtp_statistics_scalar sss;
+};
+
 static
 struct
 ratelimitspp_statistics aggregated_ratelimtspp;
+
+static
+struct
+smtp_statistics_vector aggregated_limits;
 
 static
 void *
 smtp_data_init() {
 	struct smtp_statistics * ret;
 	ret = calloc(1, sizeof * ret);
+	vector_init(&ret->ssv.maxload, sizeof(struct limit_t));
+	vector_init(&ret->ssv.maxconnnet, sizeof(struct limit_t));
+	vector_init(&ret->ssv.maxconnip, sizeof(struct limit_t));
+	vector_init(&ret->ssv.maxconnrule, sizeof(struct limit_t));
+	vector_init(&aggregated_limits.maxload, sizeof(struct limit_t));
+	vector_init(&aggregated_limits.maxconnnet, sizeof(struct limit_t));
+	vector_init(&aggregated_limits.maxconnip, sizeof(struct limit_t));
+	vector_init(&aggregated_limits.maxconnrule, sizeof(struct limit_t));
 	return ret;
+}
+
+static
+void
+set_rulename(char * name_d, const char * name_s) {
+	memset(name_d, 0, sizeof(((struct limit_t *)0)->rulename));
+	for (int i = 0; i < sizeof(((struct limit_t *)0)->rulename); i++) {
+		if (!(name_s + i) || name_s[i] == ')') {
+			break;
+		}
+		if (name_s[i] == '.') {
+			name_d[i] = '+';
+		}
+		else {
+			name_d[i] = name_s[i];
+		}
+	}
+}
+
+static
+void
+update_limit(struct vector * limits, const char * rulename_p) {
+	struct limit_t * _limit = 0;
+	struct limit_t limit;
+
+	set_rulename(limit.rulename, rulename_p);
+
+	for (int i = 0; i < limits->len; i++) {
+		_limit = vector_item(limits, i);
+		if (strcmp(_limit->rulename, limit.rulename))
+			_limit = 0;
+	}
+
+	if (_limit) {
+		_limit->count++;
+	}
+	else {
+		limit.count = 1;
+		vector_add(limits, &limit);
+	}
 }
 
 static
@@ -70,69 +142,87 @@ process_smtp(const char * line, struct smtp_statistics * data) {
 	int val;
 
 	if (strstr(line, "tcpserver: ok")) {
-		data->tcp_ok++;
-	} else if (strstr(line, "tcpserver: deny")) {
-		data->tcp_deny++;
+		data->sss.tcp_ok++;
+	} else if ((ptr = strstr(line, "tcpserver: deny"))) {
+		data->sss.tcp_deny++;
+		char * rulename = 0;
+		if ((rulename = strstr(ptr, "("))) {
+			rulename++;
+			if (!rulename)
+				fprintf(stderr, "Can't extract rule name on line: %s\n", line);
+			else if (strstr(rulename, "MAXLOAD:")) {
+				update_limit(&data->ssv.maxload, rulename);
+			}
+			else if (strstr(rulename, "MAXCONNIP:")) {
+				update_limit(&data->ssv.maxconnip, rulename);
+			}
+			else if (strstr(rulename, "MAXCONNNET:")) {
+				update_limit(&data->ssv.maxconnnet, rulename);
+			}
+			else if (strstr(rulename, "MAXCONNRULE:")) {
+				update_limit(&data->ssv.maxconnrule, rulename);
+			}
+		}
 	} else if ((ptr = strstr(line, "tcpserver: status: "))) {
 		val = strtoul(ptr + sizeof "tcpserver: status: " - 1, 0, 0);
-		data->tcp_status_sum += val;
-		data->tcp_status_count++;
+		data->sss.tcp_status_sum += val;
+		data->sss.tcp_status_count++;
 	} else if ((ptr = strstr(line, "tcpserver: end "))) {
 		ptr = strstr(ptr, "status ");
 		if (ptr) {
 			val = strtoul(ptr + sizeof "status " - 1, 0, 0);
 			switch (val) {
 			case 0:
-				data->tcp_end_status_0++;
+				data->sss.tcp_end_status_0++;
 				break;
 			case 256:
-				data->tcp_end_status_256++;
+				data->sss.tcp_end_status_256++;
 				break;
 			case 25600:
-				data->tcp_end_status_25600++;
+				data->sss.tcp_end_status_25600++;
 				break;
 			default:
-				data->tcp_end_status_others++;
+				data->sss.tcp_end_status_others++;
 				break;
 			}
 		}
 	} else if ((ptr = strstr(line, "uses ESMTPS"))) {
-		data->esmtps++;
+		data->sss.esmtps++;
 		if (strstr(ptr, "TLSv1,")) {
-			data->esmtps_tls_1++;
+			data->sss.esmtps_tls_1++;
 		} else if (strstr(ptr, "TLSv1.1,")) {
-			data->esmtps_tls_1_1++;
+			data->sss.esmtps_tls_1_1++;
 		} else if (strstr(ptr, "TLSv1.2,")) {
-			data->esmtps_tls_1_2++;
+			data->sss.esmtps_tls_1_2++;
 		} else if (strstr(ptr, "TLSv1.3,")) {
-			data->esmtps_tls_1_3++;
+			data->sss.esmtps_tls_1_3++;
 		} else {
-			data->esmtps_unknown++;
+			data->sss.esmtps_unknown++;
 		}
 	} else if ((ptr = strstr(line, "uses SMTP"))) {
-		data->smtp++;
+		data->sss.smtp++;
 	} else if ((ptr = strstr(line, "qmail-smtpd: qmail-queue error message: "))) {
 		if (strstr(ptr, "451 tcp connection to mail server timed out")) {
-			data->queue_err_conn_timeout++;
+			data->sss.queue_err_conn_timeout++;
 		} else if (strstr(ptr, "451 unable to process message")) {
-			data->queue_err_unprocess++;
+			data->sss.queue_err_unprocess++;
 		} else if (strstr(ptr, "451 tcp connection to mail server succeeded, but communication failed")) {
-			data->queue_err_comm_failed++;
+			data->sss.queue_err_comm_failed++;
 		} else if (strstr(ptr, "554 mail server permanently rejected message")) {
-			data->queue_err_perm_reject++;
+			data->sss.queue_err_perm_reject++;
 		} else if (strstr(ptr, "554 message refused")) {
-			data->queue_err_refused++;
+			data->sss.queue_err_refused++;
 		} else {
-			data->queue_err_unknown++;
+			data->sss.queue_err_unknown++;
 		}
 	} else if ((ptr = strstr(line, "ratelimitspp:"))) {
 		if (strstr(ptr, ";Result:NOK")) {
-			data->ratelimitspp.ratelimited++;
+			data->sss.ratelimitspp.ratelimited++;
 		} else if ((ptr = strstr(ptr, "Error:"))) {
 			if (strstr(ptr, "Receiving data failed, connection timed out.")) {
-				data->ratelimitspp.conn_timeout++;
+				data->sss.ratelimitspp.conn_timeout++;
 			} else {
-				data->ratelimitspp.error++;
+				data->sss.ratelimitspp.error++;
 			}
 		}
 	}
@@ -148,7 +238,6 @@ print_smtp_header(const char * name) {
 		"smtpd", "qmail.qmail_smtpd", ND_CHART_TYPE_AREA);
 	nd_dimension("tcp_ok",   "TCP OK",   ND_ALG_ABSOLUTE,  1, 1, ND_VISIBLE);
 	nd_dimension("tcp_deny", "TCP Deny", ND_ALG_ABSOLUTE, -1, 1, ND_VISIBLE);
-
 	sprintf(title, "Qmail SMTPD Open Sessions for %s", name);
 	nd_chart("qmail", name, "status", "smtpd statuses", title,
 		"average # sessions", "smtpd", "qmail.qmail_smtpd_status", ND_CHART_TYPE_LINE);
@@ -186,7 +275,6 @@ print_smtp_header(const char * name) {
 	nd_dimension("perm_reject",	 "perm_reject",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("refused",	 "refused",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("unknown",	 "unknown",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
-
 	return fflush(stdout);
 }
 
@@ -194,70 +282,121 @@ static
 int
 print_smtp_data(const char * name, const struct smtp_statistics * data, const unsigned long time) {
 	nd_begin_time("qmail", name, "", time);
-	nd_set("tcp_ok", data->tcp_ok);
-	nd_set("tcp_deny", data->tcp_deny);
+	nd_set("tcp_ok", data->sss.tcp_ok);
+	nd_set("tcp_deny", data->sss.tcp_deny);
 	nd_end();
 
 	nd_begin_time("qmail", name, "status", time);
-	nd_set("tcp_status_average", data->tcp_status);
+	nd_set("tcp_status_average", data->sss.tcp_status);
 	nd_end();
 
 	nd_begin_time("qmail", name, "end_status", time);
-	nd_set("tcp_end_status_0", data->tcp_end_status_0);
-	nd_set("tcp_end_status_256", data->tcp_end_status_256);
-	nd_set("tcp_end_status_25600", data->tcp_end_status_25600);
-	nd_set("tcp_end_status_others", data->tcp_end_status_others);
+	nd_set("tcp_end_status_0", data->sss.tcp_end_status_0);
+	nd_set("tcp_end_status_256", data->sss.tcp_end_status_256);
+	nd_set("tcp_end_status_25600", data->sss.tcp_end_status_25600);
+	nd_set("tcp_end_status_others", data->sss.tcp_end_status_others);
 	nd_end();
 
 	nd_begin_time("qmail", name, "smtp_type", time);
-	nd_set("smtp", data->smtp);
-	nd_set("esmtps", data->esmtps);
+	nd_set("smtp", data->sss.smtp);
+	nd_set("esmtps", data->sss.esmtps);
 	nd_end();
 
 	nd_begin_time("qmail", name, "tls", time);
-	nd_set("tls1", data->esmtps_tls_1);
-	nd_set("tls1.1", data->esmtps_tls_1_1);
-	nd_set("tls1.2", data->esmtps_tls_1_2);
-	nd_set("tls1.3", data->esmtps_tls_1_3);
-	nd_set("unknown", data->esmtps_unknown);
+	nd_set("tls1", data->sss.esmtps_tls_1);
+	nd_set("tls1.1", data->sss.esmtps_tls_1_1);
+	nd_set("tls1.2", data->sss.esmtps_tls_1_2);
+	nd_set("tls1.3", data->sss.esmtps_tls_1_3);
+	nd_set("unknown", data->sss.esmtps_unknown);
 	nd_end();
 
 	nd_begin_time("qmail", name, "queue_err", time);
-	nd_set("conn_timeout", data->queue_err_conn_timeout);
-	nd_set("comm_failed", data->queue_err_comm_failed);
-	nd_set("perm_reject", data->queue_err_perm_reject);
-	nd_set("refused", data->queue_err_refused);
-	nd_set("unprocess", data->queue_err_unprocess);
-	nd_set("unknown", data->queue_err_unknown);
+	nd_set("conn_timeout", data->sss.queue_err_conn_timeout);
+	nd_set("comm_failed", data->sss.queue_err_comm_failed);
+	nd_set("perm_reject", data->sss.queue_err_perm_reject);
+	nd_set("refused", data->sss.queue_err_refused);
+	nd_set("unprocess", data->sss.queue_err_unprocess);
+	nd_set("unknown", data->sss.queue_err_unknown);
 	nd_end();
-
 	return fflush(stdout);
 }
 
 static
 void
+clear_limits(struct vector * limit) {
+	struct limit_t * l = 0;
+	for (int i = 0; i < limit->len; i++) {
+		l = vector_item(limit, i);
+		l->count = 0;
+	}
+}
+
+static
+void
 clear_smtp_data(struct smtp_statistics * data) {
-	int tmp = data->tcp_status;
-	memset(data, 0, sizeof * data);
-	data->tcp_status = tmp;
+	int tmp = data->sss.tcp_status;
+	memset(&data->sss, 0, sizeof data->sss);
+	data->sss.tcp_status = tmp;
+	clear_limits(&data->ssv.maxload);
+	clear_limits(&data->ssv.maxconnip);
+	clear_limits(&data->ssv.maxconnnet);
+	clear_limits(&data->ssv.maxconnrule);
+}
+
+static
+void
+postprocess_limits(struct vector * limit_aggregated, struct vector * limit) {
+	struct limit_t * l = 0;
+	struct limit_t * l_a = 0;
+
+	for (int i = 0; i < limit->len; i++) {
+		l = vector_item(limit, i);
+		int found = 0;
+		for (int i_a = 0; i_a < limit_aggregated->len; i_a++) {
+			l_a = vector_item(limit_aggregated, i_a);
+			if (!strcmp(l->rulename, l_a->rulename)) {
+				l_a->count += l->count;
+				found = 1;
+				break;
+			}
+		}
+		if (!found) {
+			l->new = 1;
+			vector_add(limit_aggregated, l);
+		}
+	}
 }
 
 static
 void
 postprocess_data(struct smtp_statistics * data) {
-	if (data->tcp_status_count)
-		data->tcp_status = data->tcp_status_sum * FRACTIONAL_CONVERSION / data->tcp_status_count;
+	if (data->sss.tcp_status_count)
+		data->sss.tcp_status = data->sss.tcp_status_sum * FRACTIONAL_CONVERSION / data->sss.tcp_status_count;
 
-	aggregated_ratelimtspp.conn_timeout += data->ratelimitspp.conn_timeout;
-	aggregated_ratelimtspp.error += data->ratelimitspp.error;
-	if (data->ratelimitspp.ratelimited)
-		aggregated_ratelimtspp.ratelimited = 1;
+	aggregated_ratelimtspp.conn_timeout += data->sss.ratelimitspp.conn_timeout;
+	aggregated_ratelimtspp.error += data->sss.ratelimitspp.error;
+	aggregated_ratelimtspp.ratelimited += data->sss.ratelimitspp.ratelimited;
+
+        postprocess_limits(&aggregated_limits.maxload, &data->ssv.maxload);
+        postprocess_limits(&aggregated_limits.maxconnip, &data->ssv.maxconnip);
+        postprocess_limits(&aggregated_limits.maxconnnet, &data->ssv.maxconnnet);
+        postprocess_limits(&aggregated_limits.maxconnrule, &data->ssv.maxconnrule);
+}
+
+static
+void
+finish (struct smtp_statistics * data) {
+	vector_free(&data->ssv.maxconnnet);
+	vector_free(&data->ssv.maxconnip);
+	vector_free(&data->ssv.maxconnrule);
+	vector_free(&data->ssv.maxload);
+	free(data);
 }
 
 static
 struct stat_func smtp = {
 	.init = &smtp_data_init,
-	.fini = &free,
+	.fini = (void (*)(void *))&finish,
 
 	.print_hdr   = &print_smtp_header,
 	.print       = (int (*)(const char *, const void *, unsigned long))&print_smtp_data,
@@ -273,13 +412,20 @@ ratelimitspp_clear() {
 	memset(&aggregated_ratelimtspp, 0, sizeof aggregated_ratelimtspp);
 }
 
+void
+tcpserverlimits_clear() {
+	clear_limits(&aggregated_limits.maxload);
+	clear_limits(&aggregated_limits.maxconnip);
+	clear_limits(&aggregated_limits.maxconnnet);
+	clear_limits(&aggregated_limits.maxconnrule);
+}
+
 int
 ratelimitspp_print_hdr() {
 	nd_chart("qmail", "ratelimitspp", "events", "", "events of ratelimitspp", "events", "ratelimitspp", "ratelimitspp.events", ND_CHART_TYPE_LINE);
 	nd_dimension("conn_timeout", "conn_timeout", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("error", "error", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("ratelimited", "ratelimited", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-
 	return fflush(stdout);
 }
 
@@ -290,6 +436,63 @@ ratelimitspp_print(const unsigned long time) {
 	nd_set("error", aggregated_ratelimtspp.error);
 	nd_set("ratelimited", aggregated_ratelimtspp.ratelimited);
 	nd_end();
+	return fflush(stdout);
+}
 
+static
+void
+print_limits(struct vector * limit, const char * limit_name, const unsigned long time) {
+	struct limit_t * l;
+
+	struct vector newdim;
+	vector_init(&newdim, sizeof(struct limit_t));
+
+	for (int i = 0; i < limit->len; i++) {
+                l = vector_item(limit, i);
+                if (l->new) {
+                        vector_add(&newdim, l);
+		}
+	}
+
+	if (limit->len > newdim.len) {
+		nd_begin_time("qmail", "limit", limit_name, time);
+		for (int i = 0; i < limit->len; i++) {
+			l = vector_item(limit, i);
+			if (l->new) {
+				l->new = 0;
+			}
+			else {
+			nd_set(l->rulename, l->count);
+			}
+		}
+		nd_end();
+	}
+
+	for (int i = 0; i < newdim.len; i++) {
+		l = vector_item(&newdim, i);
+		char title[BUFSIZ];
+		sprintf(title, "Qmail SMTPD %s limit", limit_name);
+		nd_chart("qmail", "limit", limit_name, "", title, "# reaches",
+			"tcpserver", "qmail.qmail_smtpd_limits", ND_CHART_TYPE_LINE);
+		nd_dimension(l->rulename, l->rulename,     ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+
+		nd_begin_time("qmail", "limit", limit_name, time);
+		nd_set(l->rulename, l->count);
+		nd_end();
+		if (limit->len == newdim.len) {
+			l = vector_item(limit, i);
+			l->new = 0;
+		}
+	}
+	vector_free(&newdim);
+
+}
+
+int
+tcpserverlimits_print(const unsigned long time) {
+	print_limits(&aggregated_limits.maxload, "maxload", time);
+	print_limits(&aggregated_limits.maxconnip, "maxconnip", time);
+	print_limits(&aggregated_limits.maxconnrule, "maxconnrule", time);
+	print_limits(&aggregated_limits.maxconnnet, "maxconnnet", time);
 	return fflush(stdout);
 }
