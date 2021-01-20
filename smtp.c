@@ -99,8 +99,8 @@ static
 void
 set_rulename(char * name_d, const char * name_s, const size_t size) {
 	memset(name_d, 0, size);
-	for (int i = 0; i < size; i++) {
-		if (!(name_s + i) || name_s[i] == ')') {
+	for (int i = 0; i < size - 1; i++) {
+		if (name_s[i] == '\0' || name_s[i] == ')') {
 			break;
 		}
 		if (name_s[i] == '.') {
