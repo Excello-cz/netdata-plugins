@@ -375,7 +375,8 @@ postprocess_data(struct smtp_statistics * data) {
 
 	aggregated_ratelimtspp.conn_timeout += data->sss.ratelimitspp.conn_timeout;
 	aggregated_ratelimtspp.error += data->sss.ratelimitspp.error;
-	aggregated_ratelimtspp.ratelimited += data->sss.ratelimitspp.ratelimited;
+	if (data->sss.ratelimitspp.ratelimited)
+		aggregated_ratelimtspp.ratelimited = 1;
 
         postprocess_limits(&aggregated_limits.maxload, &data->ssv.maxload);
         postprocess_limits(&aggregated_limits.maxconnip, &data->ssv.maxconnip);
