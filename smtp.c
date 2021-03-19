@@ -55,6 +55,21 @@ struct smtp_statistics_scalar {
 	int queue_err_refused;
 	int queue_err_unprocess;
 	int queue_err_unknown;
+	int queue_err_conn_reject;
+	int queue_err_oom;
+	int queue_err_read;
+	int queue_err_make_conn;
+	int queue_err_home;
+	int queue_err_create_files;
+	int queue_err_temp_reject;
+	int queue_err_internal_bug;
+	int queue_err_unable_exec_qq;
+	int queue_err_timeout;
+	int queue_err_fulldiks;
+	int queue_err_read_config;
+	int queue_err_long_addr;
+	int queue_err_perm_problem;
+	int queue_err_temp_problem;
 
 	struct ratelimitspp_statistics ratelimitspp;
 };
@@ -201,16 +216,46 @@ process_smtp(const char * line, struct smtp_statistics * data) {
 	} else if ((ptr = strstr(line, "uses SMTP"))) {
 		data->sss.smtp++;
 	} else if ((ptr = strstr(line, "qmail-smtpd: qmail-queue error message: "))) {
-		if (strstr(ptr, "451 tcp connection to mail server timed out")) {
+		if (strstr(ptr, "451 tcp connection to mail server timed out")) { // 72
 			data->sss.queue_err_conn_timeout++;
-		} else if (strstr(ptr, "451 unable to process message")) {
-			data->sss.queue_err_unprocess++;
-		} else if (strstr(ptr, "451 tcp connection to mail server succeeded, but communication failed")) {
+		} else if (strstr(ptr, "451 tcp connection to mail server rejected")) { // 73
+			data->sss.queue_err_conn_reject++;
+		} else if (strstr(ptr, "451 tcp connection to mail server succeeded, but communication failed")) { // 74
 			data->sss.queue_err_comm_failed++;
-		} else if (strstr(ptr, "554 mail server permanently rejected message")) {
+		} else if (strstr(ptr, "451 qq internal bug")) { // 81
+			data->sss.queue_err_internal_bug++;
+		} else if (strstr(ptr, "451 unable to exec qq")) { // 120
+			data->sss.queue_err_unable_exec_qq++;
+		} else if (strstr(ptr, "451 unable to process message")) { // returned by scannerd
+			data->sss.queue_err_unprocess++;
+		} else if (strstr(ptr, "451 qq out of memory")) { // 51
+			data->sss.queue_err_oom++;
+		} else if (strstr(ptr, "451 qq timeout")) { // 52
+			data->sss.queue_err_timeout++;
+		} else if (strstr(ptr, "451 qq write error or disk full")) { // 53
+			data->sss.queue_err_fulldiks++;
+		} else if (strstr(ptr, "451 qq read error")) { // 54
+			data->sss.queue_err_read++;
+		} else if (strstr(ptr, "451 qq unable to read configuration")) { // 55
+			data->sss.queue_err_read_config++;
+		} else if (strstr(ptr, "451 qq trouble making network connection")) { // 56
+			data->sss.queue_err_make_conn++;
+		} else if (strstr(ptr, "451 qq trouble in home directory")) { // 61
+			data->sss.queue_err_home++;
+		} else if (strstr(ptr, "451 qq trouble creating files in queue")) { // 62
+			data->sss.queue_err_create_files++;
+		} else if (strstr(ptr, "451 mail server temporarily rejected message")) { // 71
+			data->sss.queue_err_temp_reject++;
+		} else if (strstr(ptr, "554 mail server permanently rejected message")) { // 31
 			data->sss.queue_err_perm_reject++;
-		} else if (strstr(ptr, "554 message refused")) {
+		} else if (strstr(ptr, "554 envelope address too long for qq")) { // 11
+			data->sss.queue_err_long_addr++;
+		} else if (strstr(ptr, "554 message refused")) { // returned by scannerd
 			data->sss.queue_err_refused++;
+		} else if (strstr(ptr, "554 qq permanent problem")) { // 11 - 40
+			data->sss.queue_err_perm_problem++;
+		} else if (strstr(ptr, "451 qq temporary problem")) { // returned by scannerd
+			data->sss.queue_err_temp_problem++;
 		} else {
 			data->sss.queue_err_unknown++;
 		}
@@ -273,6 +318,21 @@ print_smtp_header(const char * name) {
 	nd_dimension("unprocess",	 "unprocess",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("perm_reject",	 "perm_reject",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("refused",	 "refused",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("conn_reject",	 "conn_reject",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("oom",	 "oom",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("timeout",	 "timeout",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("read",	 "read",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("make_conn",	 "make_conn",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("home",	 "home",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("create_files",	 "create_files",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("temp_reject",	 "temp_reject",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("internal_bug",	 "internal_bug",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("unable_exec_qq",	 "unable_exec_qq",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("fulldiks",	 "fulldiks",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("read_config",	 "read_config",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("long_addr",	 "long_addr",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("perm_problem",	 "perm_problem",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
+	nd_dimension("temp_problem",	 "temp_problem",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	nd_dimension("unknown",	 "unknown",	 ND_ALG_ABSOLUTE,	1, 1, ND_VISIBLE);
 	return fflush(stdout);
 }
@@ -316,6 +376,21 @@ print_smtp_data(const char * name, const struct smtp_statistics * data, const un
 	nd_set("refused", data->sss.queue_err_refused);
 	nd_set("unprocess", data->sss.queue_err_unprocess);
 	nd_set("unknown", data->sss.queue_err_unknown);
+	nd_set("conn_reject", data->sss.queue_err_conn_reject);
+	nd_set("oom", data->sss.queue_err_oom);
+	nd_set("timeout", data->sss.queue_err_timeout);
+	nd_set("read", data->sss.queue_err_read);
+	nd_set("make_conn", data->sss.queue_err_make_conn);
+	nd_set("home", data->sss.queue_err_home);
+	nd_set("create_files", data->sss.queue_err_create_files);
+	nd_set("temp_reject", data->sss.queue_err_temp_reject);
+	nd_set("internal_bug", data->sss.queue_err_internal_bug);
+	nd_set("unable_exec_qq", data->sss.queue_err_unable_exec_qq);
+	nd_set("fulldiks", data->sss.queue_err_fulldiks);
+	nd_set("read_config", data->sss.queue_err_read_config);
+	nd_set("long_addr", data->sss.queue_err_long_addr);
+	nd_set("perm_problem", data->sss.queue_err_perm_problem);
+	nd_set("temp_problem", data->sss.queue_err_temp_problem);
 	nd_end();
 	return fflush(stdout);
 }
