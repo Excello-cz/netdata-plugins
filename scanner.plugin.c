@@ -88,7 +88,12 @@ detect_log_dirs(const int fd, struct vector * v) {
 				watch.file_name = "details";
 				watch.dir_name = strdup(dir_name);
 
-				if (prepare_watcher(&watch, fd, scanner_func) == ND_SUCCESS)
+				if (prepare_watcher(&watch, fd, details_func) == ND_SUCCESS)
+					vector_add(v, &watch);
+
+				watch.file_name = "current";
+
+				if (prepare_watcher(&watch, fd, scannerd_func) == ND_SUCCESS)
 					vector_add(v, &watch);
 			}
 		}
@@ -154,7 +159,7 @@ main(int argc, const char * argv[]) {
 
 	for (i = 0; i < vector.len; i++) {
 		watch = vector_item(&vector, i);
-		watch->func->print_hdr(watch->dir_name);
+		watch->func->print_hdr(watch->file_name);
 		clock_gettime(CLOCK_REALTIME, &watch->time);
 	}
 
@@ -186,7 +191,7 @@ main(int argc, const char * argv[]) {
 						watch->func->postprocess(watch->data);
 
 					last_update = update_timestamp(&watch->time);
-					if (watch->func->print(watch->dir_name, watch->data, last_update)) {
+					if (watch->func->print(watch->file_name, watch->data, last_update)) {
 						run = 0;
 						fprintf(stderr, "Cannot write to stdout: %s\n", strerror(errno));
 						break;
