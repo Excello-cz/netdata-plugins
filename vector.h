@@ -29,12 +29,12 @@ vector_add(struct vector *, const void *);
 
 static inline
 void *
-vector_item(struct vector * v, const size_t idx) {
+vector_item(const struct vector * v, const size_t idx) {
 	return (char *)v->data + idx * v->size;
 }
 
 int
-vector_search(struct vector *, const void *);
+vector_search(const struct vector *, const void *);
 
 void
 vector_free(struct vector *);

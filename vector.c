@@ -46,7 +46,7 @@ vector_add(struct vector * v, const void * new) {
 }
 
 int
-vector_search(struct vector * v, const void * item) {
+vector_search(const struct vector * v, const void * item) {
 	int i;
 	for (i = 0; i < v->len; i++)
 		if (!memcmp(item, vector_item(v, i), v->size))
