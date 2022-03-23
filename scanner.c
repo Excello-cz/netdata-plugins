@@ -293,56 +293,25 @@ details_process(const char * line, struct details_statistics * data) {
 
 static
 int
-get_conn_ip(const char * line, char * ip_lastpart) {
-	#define UNTOCONN "unable to connect to "
+get_ip(const char * line, char * ip_lastpart, const char * startstring, const int startstring_len) {
 	char ip[64];
 
 	ip_lastpart[0] = '\0';
 
-	if (!STARTSWITH(line, UNTOCONN))
+	if (!STARTSWITH(line, startstring))
 		return 0;
 
-	if ((line = get_next_field(ip, sizeof ip, line + sizeof UNTOCONN - 1, ' ')) == NULL)
+	if ((line = get_next_field(ip, sizeof ip, line + startstring_len, ' ')) == NULL)
 		return 0;
 
-	// Get rid of the last '"' and ':'
-	int ipend = strlen(ip) - 3;
+	// Get rid of the last '"'
+	int ipend = ip - strrchr(ip, '"') - 1;
 
 	if (ipend < 4)
 		return 1;
 
 	int ipstart = ipend;
 	for (; ipstart > ipend - 4 && ip[ipstart] != '.' && ip[ipstart] != ':'; ipstart--);
-
-	int ip_lastpart_len = ipend - ipstart;
-	ipstart++;
-	memcpy(ip_lastpart, ip + ipstart, ip_lastpart_len);
-	ip_lastpart[ip_lastpart_len] = '\0';
-	return 1;
-}
-
-static
-int
-get_scan_ip(const char * line, char * ip_lastpart) {
-	#define SCANWITH "scanning with "
-	char ip[64];
-
-	ip_lastpart[0] = '\0';
-
-	if (!STARTSWITH(line, SCANWITH))
-		return 0;
-	if ((line = get_next_field(ip, sizeof ip, line + sizeof SCANWITH - 1, ' ')) == NULL)
-		return 0;
-
-	// Get rid of the last '"'
-	int ipend = strlen(ip) - 2;
-
-	if (ipend < 4)
-		return 1;
-
-	int ipstart = ipend;
-	for (; ipstart > ipend - 4 && ip[ipstart] != '.' && ip[ipstart] != ':'; ipstart--)
-		;
 
 	int ip_lastpart_len = ipend - ipstart;
 	ipstart++;
@@ -398,6 +367,9 @@ add_warn(const char * scanner, const char * warnt, const char * ip, struct vecto
 	}
 }
 
+#define UNTOCONN "unable to connect to "
+#define SCANWITH "scanning with "
+
 static
 void
 scannerd_process(const char * line, struct scannerd_statistics * data) {
@@ -427,27 +399,27 @@ scannerd_process(const char * line, struct scannerd_statistics * data) {
 		if (STARTSWITH(module, "extractor(")) {
 			if (STARTSWITH(log, "skipped maxsize")) {
 				data->sss.ex_maxsize++;
-			} else if (get_conn_ip(log, ip)) {
+			} else if (get_ip(log, ip, UNTOCONN, sizeof(UNTOCONN) - 1)) {
 				add_warn("ex", "conn", ip, &data->swv);
-			} else if (get_scan_ip(log, ip)) {
+			} else if (get_ip(log, ip, SCANWITH, sizeof(SCANWITH) - 1)) {
 				add_warn("ex", "scan", ip, &data->swv);
 			}
 		} else if (STARTSWITH(module, "rspamd(")) {
-			if (get_conn_ip(log, ip)) {
+			if (get_ip(log, ip, UNTOCONN, sizeof(UNTOCONN) - 1)) {
 				add_warn("rs", "conn", ip, &data->swv);
-			} else if (get_scan_ip(log, ip)) {
+			} else if (get_ip(log, ip, SCANWITH, sizeof(SCANWITH) - 1)) {
 				add_warn("rs", "scan", ip, &data->swv);
 			}
 		} else if (STARTSWITH(module, "spamassassin")) {
-			if (get_conn_ip(log, ip)) {
+			if (get_ip(log, ip, UNTOCONN, sizeof(UNTOCONN) - 1)) {
 				add_warn("sa", "conn", ip, &data->swv);
-			} else if (get_scan_ip(log, ip)) {
+			} else if (get_ip(log, ip, SCANWITH, sizeof(SCANWITH) - 1)) {
 				add_warn("sa", "scan", ip, &data->swv);
 			}
 		} else if (STARTSWITH(module, "clamav(")) {
-			if (get_conn_ip(log, ip)) {
+			if (get_ip(log, ip, UNTOCONN, sizeof(UNTOCONN) - 1)) {
 				add_warn("av", "conn", ip, &data->swv);
-			} else if (get_scan_ip(log, ip)) {
+			} else if (get_ip(log, ip, SCANWITH, sizeof(SCANWITH) - 1)) {
 				add_warn("av", "scan", ip, &data->swv);
 			}
 		} else if (STARTSWITH(module, "daemon(")) {
