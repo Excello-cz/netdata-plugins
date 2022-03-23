@@ -66,7 +66,7 @@ struct details_statistics {
 
 	unsigned int null_field;
 	unsigned int empty_field;
-	unsigned int incorrectNumOfClmns;
+	unsigned int incorrect_num_clmns;
 };
 
 #define SIZE_OF_WARN_NAME 16
@@ -175,7 +175,8 @@ get_next_field(char * restrict buf, size_t size, const char * restrict line, con
 	}
 
 	for (; *s != delim; s++) {
-		if (!*s) return NULL;
+		if (!*s)
+			return NULL;
 	}
 
 	return s;
@@ -190,13 +191,13 @@ details_process(const char * line, struct details_statistics * data) {
 
 	/* Skip date */
 	if ((line = get_next_field(buf, sizeof buf, line, '\t')) == NULL) {
-		data->incorrectNumOfClmns = 1;
+		data->incorrect_num_clmns = 1;
 		return;
 	}
 
 	/* Load scan status */
 	if ((line = get_next_field(buf, sizeof buf, line + 1, '\t')) == NULL) {
-		data->incorrectNumOfClmns = 1;
+		data->incorrect_num_clmns = 1;
 		return;
 	}
 
@@ -232,7 +233,7 @@ details_process(const char * line, struct details_statistics * data) {
 
 	/* Load time */
 	if ((line = get_next_field(buf, sizeof buf, line + 1, '\t')) == NULL) {
-		data->incorrectNumOfClmns = 1;
+		data->incorrect_num_clmns = 1;
 		return;
 	}
 
@@ -271,7 +272,7 @@ details_process(const char * line, struct details_statistics * data) {
 	for (; cur_field_num <= NUM_OF_FIELDS; cur_field_num++) {
 		line = get_next_field(buf, sizeof buf, line + 1, '\t');
 		if (cur_field_num < NUM_OF_FIELDS && line == NULL) {
-			data->incorrectNumOfClmns = 1;
+			data->incorrect_num_clmns = 1;
 			return;
 		} else if (cur_field_num >= 11) {
 			if (!*buf) {
@@ -284,7 +285,7 @@ details_process(const char * line, struct details_statistics * data) {
 		}
 	}
 	if (line != NULL) {
-		data->incorrectNumOfClmns = 1;
+		data->incorrect_num_clmns = 1;
 	}
 }
 
@@ -298,15 +299,17 @@ get_conn_ip(const char * line, char * ip_lastpart) {
 
 	ip_lastpart[0] = '\0';
 
-	if (!STARTSWITH(line, UNTOCONN)) return 0;
-	if ((line = get_next_field(ip, sizeof ip, line + sizeof UNTOCONN - 1, ' ')) == NULL) {
+	if (!STARTSWITH(line, UNTOCONN))
 		return 0;
-	}
+
+	if ((line = get_next_field(ip, sizeof ip, line + sizeof UNTOCONN - 1, ' ')) == NULL)
+		return 0;
 
 	// Get rid of the last '"' and ':'
 	int ipend = strlen(ip) - 3;
 
-	if (ipend < 4) return 1;
+	if (ipend < 4)
+		return 1;
 
 	int ipstart = ipend;
 	for (; ipstart > ipend - 4 && ip[ipstart] != '.' && ip[ipstart] != ':'; ipstart--);
@@ -326,18 +329,20 @@ get_scan_ip(const char * line, char * ip_lastpart) {
 
 	ip_lastpart[0] = '\0';
 
-	if (!STARTSWITH(line, SCANWITH)) return 0;
-	if ((line = get_next_field(ip, sizeof ip, line + sizeof SCANWITH - 1, ' ')) == NULL) {
+	if (!STARTSWITH(line, SCANWITH))
 		return 0;
-	}
+	if ((line = get_next_field(ip, sizeof ip, line + sizeof SCANWITH - 1, ' ')) == NULL)
+		return 0;
 
 	// Get rid of the last '"'
 	int ipend = strlen(ip) - 2;
 
-	if (ipend < 4) return 1;
+	if (ipend < 4)
+		return 1;
 
 	int ipstart = ipend;
-	for (; ipstart > ipend - 4 && ip[ipstart] != '.' && ip[ipstart] != ':'; ipstart--);
+	for (; ipstart > ipend - 4 && ip[ipstart] != '.' && ip[ipstart] != ':'; ipstart--)
+		;
 
 	int ip_lastpart_len = ipend - ipstart;
 	ipstart++;
@@ -639,7 +644,7 @@ details_print(const char * name, const struct details_statistics * data,
 	nd_begin_time("scannerd", name, "incorrect_data_fields", time);
 	nd_set("null_field", data->null_field);
 	nd_set("empty_field", data->empty_field);
-	nd_set("incorrect_#clmns", data->incorrectNumOfClmns);
+	nd_set("incorrect_#clmns", data->incorrect_num_clmns);
 	nd_end();
 
 	return fflush(stdout);
@@ -696,7 +701,8 @@ print_new_header_warn(const char * name, struct vector * warn,
 	struct warn_t * w;
 	for (int i = warn->len - 1; i >= 0; i--) {
 		w = vector_item(warn, i);
-		if (!w->new) break;
+		if (!w->new)
+			break;
 
 		w->new = 0;
 		nd_chart("scannerd", name, "warnings", "", "Warnings", "# warnings", "scannerd", "scannerd.current_warnings", ND_CHART_TYPE_LINE);
