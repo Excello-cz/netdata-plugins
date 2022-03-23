@@ -652,50 +652,6 @@ details_print(const char * name, const struct details_statistics * data,
 
 static
 void
-print_warn(const char * dirname, struct vector * warn, const unsigned long time) {
-	struct warn_t * w;
-
-	struct vector newdim;
-	vector_init(&newdim, sizeof(struct warn_t));
-
-	for (int i = 0; i < warn->len; i++) {
-		w = vector_item(warn, i);
-		if (w->new) {
-			vector_add(&newdim, w);
-		}
-	}
-
-	if (warn->len > newdim.len) {
-		nd_begin_time("scannerd", dirname, "warnings", time);
-		for (int i = 0; i < warn->len; i++) {
-			w = vector_item(warn, i);
-			if (w->new) {
-				w->new = 0;
-			} else {
-				nd_set(w->name, w->count);
-			}
-		}
-		nd_end();
-	}
-
-	for (int i = 0; i < newdim.len; i++) {
-		w = vector_item(&newdim, i);
-		nd_chart("scannerd", dirname, "warnings", "", "Warnings", "# warnings", "scannerd", "scannerd.current_warnings", ND_CHART_TYPE_LINE);
-		nd_dimension(w->name, w->name, ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
-
-		nd_begin_time("scannerd", dirname, "warnings", time);
-		nd_set(w->name, w->count);
-		nd_end();
-		if (warn->len == newdim.len) {
-			w = vector_item(warn, i);
-			w->new = 0;
-		}
-	}
-	vector_free(&newdim);
-}
-
-static
-void
 print_new_header_warn(const char * name, struct vector * warn,
 		const unsigned long time) {
 	struct warn_t * w;
