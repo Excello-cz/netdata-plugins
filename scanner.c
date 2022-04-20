@@ -305,7 +305,7 @@ get_ip(const char * line, char * ip_lastpart, const char * startstring, const in
 		return 0;
 
 	// Get rid of the last '"'
-	int ipend = ip - strrchr(ip, '"') - 1;
+	int ipend = strrchr(ip, '"') - ip - 1;
 
 	if (ipend < 4)
 		return 1;
