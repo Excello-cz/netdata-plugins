@@ -7,7 +7,7 @@ PLUGIN_DIR = ${DESTDIR}${PREFIX}/libexec/netdata/plugins.d
 CONF_DIR   = ${DESTDIR}${PREFIX}/${LIB_DIR}/netdata/conf.d
 HEALTH_DIR = ${CONF_DIR}/health.d
 
-VERSION = 0.11
+VERSION = 0.11.1
 
 CFLAGS ?= -O2 -pipe
 CFLAGS += -Wall -pedantic
