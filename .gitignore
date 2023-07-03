@@ -1,5 +1,6 @@
 *.o
 
+ipmi-dcmi.plugin
 parser.plugin
 qmail.plugin
 scanner.plugin

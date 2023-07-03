@@ -17,6 +17,7 @@ CFLAGS += -Werror=implicit-function-declaration
 CPPFLAGS += -D_GNU_SOURCE
 
 BIN = \
+	ipmi-dcmi.plugin \
 	qmail.plugin \
 	scanner.plugin \
 	svstat.plugin \
@@ -30,11 +31,15 @@ HEADERS_COMMON = fs.h err.h timer.h vector.h
 all: $(BIN)
 
 ## Dependencies
+ipmi-dcmi.plugin: LDLIBS += -lfreeipmi
+ipmi-dcmi.plugin: netdata.o timer.o
+
 qmail.plugin: qmail.plugin.o $(OBJS_COMMON) queue.o send.o smtp.o
 scanner.plugin: scanner.plugin.o $(OBJS_COMMON) scanner.o
 svstat.plugin: fs.o netdata.o timer.o vector.o
 parser.plugin: parser.plugin.o $(OBJS_COMMON) parser.o
 
+ipmi-dcmi.plugin.o: err.h netdata.h timer.h
 qmail.plugin.o: $(HEADERS_COMMON) flush.h signal.h queue.h send.h smtp.h
 scanner.plugin.o: $(HEADERS_COMMON) flush.h signal.h scanner.h
 svstat.plugin.o: $(HEADERS_COMMON) netdata.h
