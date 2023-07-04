@@ -17,11 +17,14 @@ CFLAGS += -Werror=implicit-function-declaration
 CPPFLAGS += -D_GNU_SOURCE
 
 BIN = \
-	ipmi-dcmi.plugin \
 	qmail.plugin \
 	scanner.plugin \
 	svstat.plugin \
 	parser.plugin
+
+ifdef IPMI_PLUGIN
+BIN += ipmi-dcmi.plugin
+endif
 
 OBJS_COMMON = flush.o fs.o netdata.o signal.o timer.o vector.o
 
