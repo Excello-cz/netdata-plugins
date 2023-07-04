@@ -18,9 +18,11 @@ struct ipmi_dcmi_stat {
 	uint16_t minimum_power_over_sampling_duration;
 	uint16_t maximum_power_over_sampling_duration;
 	uint16_t average_power_over_sampling_duration;
+#ifdef IPMI_DCMI_POWER_READ_ALL
 	uint32_t time_stamp;
 	uint32_t statistics_reporting_time_period;
 	uint8_t power_measurement;
+#endif
 };
 
 static
@@ -75,6 +77,7 @@ read_data(ipmi_ctx_t ipmi_ctx, struct ipmi_dcmi_stat * data) {
 	}
 	data->average_power_over_sampling_duration = val;
 
+#ifdef IPMI_DCMI_POWER_READ_ALL
 	if (FIID_OBJ_GET(obj_cmd_rs, "time_stamp", &val) < 0) {
 		fprintf(stderr, "ipmi-dcmi.plugin: fiid_obj_get: 'time_stamp': %s\n", fiid_obj_errormsg(obj_cmd_rs));
 		return ND_ERROR;
@@ -93,6 +96,7 @@ read_data(ipmi_ctx_t ipmi_ctx, struct ipmi_dcmi_stat * data) {
 		return ND_ERROR;
 	}
 	data->power_measurement = val;
+#endif
 
 	return ND_SUCCESS;
 }
@@ -163,6 +167,7 @@ main(int argc, char **argv) {
 	nd_dimension("maximum", "maximum", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 	nd_dimension("average", "average", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
 
+#ifdef IPMI_DCMI_POWER_READ_ALL
 	nd_chart("ipmi", "dcmi_timestamp", NULL, NULL, "IPMI DCMI timestamp",
 		"Seconds", "time", "ipmi.dcmi", ND_CHART_TYPE_LINE);
 	nd_dimension("timestamp", "timestamp", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
@@ -174,6 +179,7 @@ main(int argc, char **argv) {
 	nd_chart("ipmi", "dcmi_measurement", NULL, NULL, "IPMI DCMI Measurement",
 		"On/Off", "measurement", "ipmi.dcmi", ND_CHART_TYPE_LINE);
 	nd_dimension("state", "state", ND_ALG_ABSOLUTE, 1, 1, ND_VISIBLE);
+#endif
 
 	clock_gettime(CLOCK_REALTIME, &timestamp);
 
@@ -189,6 +195,7 @@ main(int argc, char **argv) {
 		nd_set("average", data.average_power_over_sampling_duration);
 		nd_end();
 
+#ifdef IPMI_DCMI_POWER_READ_ALL
 		nd_begin_time("ipmi", "dcmi_timestamp", NULL, last_update);
 		nd_set("timestamp", data.time_stamp);
 		nd_end();
@@ -200,6 +207,7 @@ main(int argc, char **argv) {
 		nd_begin_time("ipmi", "dcmi_measurement", NULL, last_update);
 		nd_set("state", data.power_measurement);
 		nd_end();
+#endif
 
 		if (fflush(stdout) == EOF) {
 			fprintf(stderr, "ipmi-dcmi.plugin: cannot write to stdout: %s\n", strerror(errno));
