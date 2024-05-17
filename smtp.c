@@ -99,10 +99,12 @@ void *
 smtp_data_init() {
 	struct smtp_statistics * ret;
 	ret = calloc(1, sizeof * ret);
-	vector_init(&ret->ssv.maxload, sizeof(struct limit_t));
-	vector_init(&ret->ssv.maxconnnet, sizeof(struct limit_t));
-	vector_init(&ret->ssv.maxconnip, sizeof(struct limit_t));
-	vector_init(&ret->ssv.maxconnrule, sizeof(struct limit_t));
+	if (ret != NULL) {
+		vector_init(&ret->ssv.maxload, sizeof(struct limit_t));
+		vector_init(&ret->ssv.maxconnnet, sizeof(struct limit_t));
+		vector_init(&ret->ssv.maxconnip, sizeof(struct limit_t));
+		vector_init(&ret->ssv.maxconnrule, sizeof(struct limit_t));
+	}
 	vector_init(&aggregated_limits.maxload, sizeof(struct limit_t));
 	vector_init(&aggregated_limits.maxconnnet, sizeof(struct limit_t));
 	vector_init(&aggregated_limits.maxconnip, sizeof(struct limit_t));
