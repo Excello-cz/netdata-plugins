@@ -164,18 +164,15 @@ process_smtp(const char * line, struct smtp_statistics * data) {
 		char * rulename = 0;
 		if ((rulename = strstr(ptr, "("))) {
 			rulename++;
-			if (!rulename)
+			if (!rulename) {
 				fprintf(stderr, "Can't extract rule name on line: %s\n", line);
-			else if (strstr(rulename, "MAXLOAD:")) {
+			} else if (strstr(rulename, "MAXLOAD:")) {
 				update_limit(&data->ssv.maxload, rulename);
-			}
-			else if (strstr(rulename, "MAXCONNIP:")) {
+			} else if (strstr(rulename, "MAXCONNIP:")) {
 				update_limit(&data->ssv.maxconnip, rulename);
-			}
-			else if (strstr(rulename, "MAXCONNNET:")) {
+			} else if (strstr(rulename, "MAXCONNNET:")) {
 				update_limit(&data->ssv.maxconnnet, rulename);
-			}
-			else if (strstr(rulename, "MAXCONNRULE:")) {
+			} else if (strstr(rulename, "MAXCONNRULE:")) {
 				update_limit(&data->ssv.maxconnrule, rulename);
 			}
 		}
