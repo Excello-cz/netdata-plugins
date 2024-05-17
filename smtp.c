@@ -136,6 +136,11 @@ update_limit(struct vector * limits, const char * rulename_p) {
 
 	set_rulename(limit.rulename, rulename_p, sizeof limit.rulename);
 
+	if (*limit.rulename == '\0') {
+		fprintf(stderr, "Empty rule name in tcpserver deny log line detected. Changing it to \"all\".\n");
+		strcat(limit.rulename, "all");
+	}
+
 	for (int i = 0; i < limits->len; i++) {
 		_limit = vector_item(limits, i);
 		if (strcmp(_limit->rulename, limit.rulename))
