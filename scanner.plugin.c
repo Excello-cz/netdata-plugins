@@ -92,6 +92,7 @@ detect_log_dirs(const int fd, struct vector * v) {
 					vector_add(v, &watch);
 
 				watch.file_name = "current";
+				watch.dir_name = strdup(dir_name);
 
 				if (prepare_watcher(&watch, fd, scannerd_func) == ND_SUCCESS)
 					vector_add(v, &watch);
